@@ -1,0 +1,9 @@
+20240430	13:17:38	18fe4592-8e2b-4152-823b-37a9c2abbfd4	GET	undefined	/api/user/refreshActivation
+20240503	13:15:32	b980c45a-6a82-4766-9d7c-5cd47c01a166	GET	undefined	/favicon.ico
+20240503	13:53:25	5f525095-0fa6-4845-bc36-6be62a7ba8cc	GET	undefined	/api/user/logout
+20240503	13:53:32	6823d4ac-c66e-4e1a-bec5-347ccac52171	GET	undefined	/api/user/logOut
+20240503	13:53:39	8bb4e278-2064-43e5-bdce-05abf0cac963	GET	undefined	/api/user/logout
+20240503	14:34:10	46fd81b2-fccb-43ef-b78d-c6a6cf34d1d8	GET	undefined	/api/user/refresh
+20240503	14:50:33	8a7f3419-9d6e-4d1c-904b-2d34f08cef6e	GET	undefined	/favicon.ico
+20240503	15:30:02	7fdcd424-7859-4350-ac59-7bc8eb1b73b2	GET	undefined	/favicon.ico
+20240503	15:31:55	825d88f2-4092-46e5-afad-faa0d50cd387	GET	undefined	/favicon.ico
