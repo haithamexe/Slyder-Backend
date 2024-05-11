@@ -227,3 +227,4 @@
 20240503	15:23:15	bfb300b3-c4fe-461e-8d6f-0d143b86394a	Error: cors not working properly
 20240503	15:23:15	e46fcd8c-197f-4484-bc75-54a74a50c25f	Error: cors not working properly
 20240503	15:23:15	51f8e5d8-2bef-4725-912d-eef6f4fa3dcc	Error: cors not working properly
+20240510	17:38:06	0b368128-268c-440b-9acd-e13b0a67bd7b	BadRequestError: request aborted

@@ -70,10 +70,6 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    friends: {
-      type: Array,
-      default: [],
-    },
     following: {
       type: Array,
       default: [],
@@ -86,6 +82,28 @@ const userSchema = mongoose.Schema(
       type: Array,
       default: [],
     },
+    notifications: {
+      type: Array,
+      default: [],
+    },
+    posts: [
+      {
+        type: ObjectId,
+        ref: "Post",
+      },
+    ],
+    notes: [
+      {
+        type: ObjectId,
+        ref: "Note",
+      },
+    ],
+
+    community: {
+      type: ObjectId,
+      ref: "Community",
+    },
+
     search: [
       {
         user: {
@@ -95,10 +113,11 @@ const userSchema = mongoose.Schema(
       },
     ],
     details: {
-      bio: {
-        type: String,
+      skills: {
+        type: Array,
+        default: [],
       },
-      otherName: {
+      bio: {
         type: String,
       },
       job: {
@@ -124,6 +143,9 @@ const userSchema = mongoose.Schema(
         type: String,
       },
       instagram: {
+        type: String,
+      },
+      website: {
         type: String,
       },
     },

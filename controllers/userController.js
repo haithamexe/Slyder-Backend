@@ -91,7 +91,7 @@ exports.activateAccount = async (req, res) => {
     if (!decoded) {
       return res.status(400).json({ message: "Invalid token" });
     }
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).exec();
     if (!user) {
       return res.status(404).json({ message: "Account not found" });
     }
@@ -271,12 +271,20 @@ exports.auth = async (req, res) => {
 
     console.log("Authed: ", refreshDecoded.id, accessDecoded.id);
 
+    const numberOfFollowers = user.followers.length;
+    const numberOfFollowing = user.following.length;
+
     const data = {
       id: user._id,
       username: user.username,
       firstName: user.firstName,
       surName: user.surName,
       verified: user.verified,
+      picture: user.picture,
+      cover: user.cover,
+      followersNum: numberOfFollowers,
+      followingNum: numberOfFollowing,
+      bio: user.details.bio,
       picture: user.picture,
     };
     return res.status(200).json(data);
