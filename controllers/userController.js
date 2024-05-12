@@ -284,8 +284,7 @@ exports.auth = async (req, res) => {
       cover: user.cover,
       followersNum: numberOfFollowers,
       followingNum: numberOfFollowing,
-      bio: user.details.bio,
-      picture: user.picture,
+      bio: user?.details?.bio,
     };
     return res.status(200).json(data);
   } catch (err) {
