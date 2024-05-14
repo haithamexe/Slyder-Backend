@@ -9,6 +9,7 @@ const {
   usernameValidation,
   validEmail,
 } = require("../helpers/validation");
+const cloudinary = require("../config/cloudinaryConfig");
 
 exports.register = async (req, res) => {
   try {
@@ -274,6 +275,11 @@ exports.auth = async (req, res) => {
     const numberOfFollowers = user.followers.length;
     const numberOfFollowing = user.following.length;
 
+    if (!user.picture) {
+      user.picture =
+        "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic";
+    }
+
     const data = {
       id: user._id,
       username: user.username,
@@ -339,60 +345,97 @@ exports.refreshActivationToken = async (req, res) => {
   }
 };
 
-// exports.updateUser = async (req, res) => {
-//   const {
-//     username,
-//     password,
-//     email,
-//     profilePic,
-//     coverPic,
-//     bio,
-//     following,
-//     followers,
-//   } = req.body;
-//   const id = req.params.id;
-//   try {
-//     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-//       return res.status(400).json({ message: "Please provide an id" });
-//     }
-//     const user = await User.findById(id).lean().exec();
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+exports.updateUser = async (req, res) => {
+  try {
+    const {
+      username,
+      password,
+      email,
+      profilePic,
+      coverPic,
+      bio,
+      skills,
+      website,
+    } = req.body;
 
-//     const updatedUser = await User.findByIdAndUpdate(id, data, {
-//       new: true,
-//     }).lean();
-//     return res.status(200).json(updatedUser);
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// };
+    const id = req.params.id;
 
-// exports.getUserById = async (req, res) => {
-//   try {
-//     const id = req.params.id;
-//     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-//       return res.status(400).json({ message: "Please provide an id" });
-//     }
-//     const user = await User.findById(id).lean().exec();
-//     console.log(user);
-//     if (user) {
-//       const userdata = {
-//         username: user.username,
-//         firstName: user.firstName,
-//         surName: user.surName,
-//         verified: user.verified,
-//         picture: user.picture,
-//       };
-//       return res.status(200).json(userdata);
-//     } else {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// };
+    const user = await User.findById(id).exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (username) {
+      user.username = username;
+    }
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+    }
+
+    if (email) {
+      user.email = email;
+    }
+
+    if (profilePic) {
+      const profile = await cloudinary.uploader.upload(profilePic, {
+        upload_preset: "slyder",
+      });
+
+      user.picture = profile.secure_url;
+    }
+
+    if (coverPic) {
+      const cover = await cloudinary.uploader.upload(coverPic, {
+        upload_preset: "slyder",
+      });
+
+      user.cover = cover.secure_url;
+    }
+
+    if (bio) {
+      user.details.bio = bio;
+    }
+
+    if (skills) {
+      user.details.skills = skills;
+    }
+
+    if (website) {
+      user.details.website = website;
+    }
+
+    await user.save();
+    return res.status(200).json({ message: "User updated" });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getUserById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
+    const user = await User.findById(id).lean().exec();
+    console.log(user);
+    if (user) {
+      const userdata = {
+        username: user.username,
+        firstName: user.firstName,
+        surName: user.surName,
+        verified: user.verified,
+        picture: user.picture,
+      };
+      return res.status(200).json(userdata);
+    } else {
+      return res.status(404).json({ message: "User not found" });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
 
 // exports.getUserByUsername = async (req, res) => {
 //   try {

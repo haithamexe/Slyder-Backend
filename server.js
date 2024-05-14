@@ -11,6 +11,7 @@ const errorHandler = require("./middleware/errorHandler");
 const { logger } = require("./middleware/logEvents");
 const socketIO = require("socket.io");
 const http = require("http");
+const cloudinary = "./config/cloudinaryConfig";
 // const errorHandler = require("./middleware/errorHandler");
 // const verifyJWT = require("./middleware/verifyJWT");
 // const cookieParser = require("cookie-parser");

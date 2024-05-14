@@ -41,7 +41,8 @@ const userSchema = mongoose.Schema(
     },
     picture: {
       type: String,
-      default: "",
+      default:
+        "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic",
     },
     cover: {
       type: String,
@@ -134,10 +135,6 @@ const userSchema = mongoose.Schema(
       },
       currentCity: {
         type: String,
-      },
-      hometown: {
-        type: String,
-        enum: ["Single", "In a relationship", "Married", "Divorced"],
       },
       relationship: {
         type: String,
