@@ -13,6 +13,11 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    reciver: {
+      type: ObjectId,
+      ref: "User",
+      required: true,
+    },
     content: {
       type: String,
       required: true,
@@ -31,6 +36,4 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Message = mongoose.model("Message", messageSchema);
-
-module.exports = Message;
+module.exports = mongoose.model("Message", messageSchema);

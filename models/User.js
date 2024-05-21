@@ -87,6 +87,10 @@ const userSchema = mongoose.Schema(
       type: Array,
       default: [],
     },
+    suspended: {
+      type: Boolean,
+      default: false,
+    },
     posts: [
       {
         type: ObjectId,
@@ -120,6 +124,7 @@ const userSchema = mongoose.Schema(
       },
       bio: {
         type: String,
+        default: "",
       },
       job: {
         type: String,
@@ -144,20 +149,13 @@ const userSchema = mongoose.Schema(
       },
       website: {
         type: String,
+        default: "",
       },
     },
-    savedPost: [
-      {
-        post: {
-          type: ObjectId,
-          ref: "Post",
-        },
-        savedAt: {
-          type: Date,
-          default: new Date().toISOString(),
-        },
-      },
-    ],
+    saved: {
+      type: ObjectId,
+      ref: "Saved",
+    },
   },
   {
     timestamps: true,

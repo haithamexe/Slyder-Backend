@@ -4,21 +4,14 @@ const { ObjectId } = mongoose.Schema;
 
 const postSchema = mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      min: 3,
-      max: 15,
-      trim: true,
-      text: true,
-    },
     content: {
       type: String,
-      required: true,
-      min: 3,
-      max: 15,
-      trim: true,
-      text: true,
+      min: 0,
+      max: 1000,
+    },
+    image: {
+      type: String,
+      default: "",
     },
     user: {
       type: ObjectId,
@@ -28,7 +21,7 @@ const postSchema = mongoose.Schema(
       type: ObjectId,
       ref: "Community",
     },
-    Comments: [
+    comments: [
       {
         type: ObjectId,
         ref: "Comment",
@@ -37,13 +30,19 @@ const postSchema = mongoose.Schema(
     likes: [
       {
         type: ObjectId,
-        ref: "User",
+        ref: "Like",
       },
     ],
     shares: {
       type: Number,
       default: 0,
     },
+    type: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
+
+module.exports = mongoose.model("Post", postSchema);

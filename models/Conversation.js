@@ -9,6 +9,12 @@ const conversationSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    messages: [
+      {
+        type: ObjectId,
+        ref: "Message",
+      },
+    ],
     lastMessage: {
       type: ObjectId,
       ref: "Message",
@@ -32,6 +38,4 @@ const conversationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Conversation = mongoose.model("Conversation", conversationSchema);
-
-module.exports = Conversation;
+module.exports = mongoose.model("Conversation", conversationSchema);
