@@ -151,6 +151,7 @@ exports.login = async (req, res) => {
 
     email = email.toLowerCase().trim();
 
+    // Check if email is valid change
     if (!validEmail(email)) {
       return res.status(404).json({ message: "Invalid email" });
     }
@@ -220,7 +221,7 @@ exports.login = async (req, res) => {
 
 exports.refresh = async (req, res) => {
   try {
-    console.log(req.cookies);
+    // console.log(req.cookies);
     const token = req.cookies.refreshToken;
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" + req.cookies });
@@ -285,9 +286,6 @@ exports.auth = async (req, res) => {
       user.picture =
         "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic";
     }
-
-    user.details.skills = ["football", "coding", "art"];
-    user.details.bio = "Hello World";
 
     await user.save();
 
@@ -365,8 +363,18 @@ exports.refreshActivationToken = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { username, password, profilePic, coverPic, bio, skills, website } =
-      req.body;
+    const {
+      username,
+      firstName,
+      surName,
+      password,
+      profilePic,
+      coverPic,
+      bio,
+      skills,
+      website,
+    } = req.body;
+    console.log(req.body);
 
     const id = req.params.id;
 
@@ -375,16 +383,55 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    if (firstName) {
+      if (firstName.length < 2 || firstName.length > 20) {
+        return res
+          .status(400)
+          .json({ message: "First Name must be between 2 and 20 characters" });
+      }
+      if (firstName === user.firstName) {
+        return res.status(400).json({ message: "No Change" });
+      }
+      user.firstName = firstName;
+    }
+
+    if (surName) {
+      if (surName.length < 2 || surName.length > 20) {
+        return res
+          .status(400)
+          .json({ message: "Surname must be between 2 and 20 characters" });
+      }
+      if (surName === user.surName) {
+        return res.status(400).json({ message: "No Change" });
+      }
+      user.surName = surName;
+    }
+
     if (username) {
       const usernameExists = await User.findOne({ username: username })
         .lean()
         .exec();
+      if (username === user.username) {
+        return res.status(400).json({ message: "No Change" });
+      }
       if (usernameExists) {
         return res.status(400).json({ message: "Username already taken" });
       }
       user.username = username;
     }
     if (password) {
+      if (password.length < 6 || password.length > 20) {
+        return res
+          .status(400)
+          .json({ message: "Password must be between 6 and 20 characters" });
+      }
+
+      const passwordMatch = await bcrypt.compare(password, user.password);
+
+      if (passwordMatch) {
+        return res.status(400).json({ message: "New password must be unique" });
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10);
       user.password = hashedPassword;
     }
@@ -412,6 +459,12 @@ exports.updateUser = async (req, res) => {
     }
 
     if (skills) {
+      currentSkills = user.details.skills;
+      skills.forEach((skill) => {
+        if (!currentSkills.includes(skill)) {
+          currentSkills.push(skill);
+        }
+      });
       user.details.skills = skills;
     }
 
@@ -420,7 +473,9 @@ exports.updateUser = async (req, res) => {
     }
 
     await user.save();
-    return res.status(200).json({ message: "User updated" });
+    return res
+      .status(200)
+      .json({ message: "User updated", username: user.username });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -461,14 +516,15 @@ exports.getUserById = async (req, res) => {
 
 exports.getUserByUsername = async (req, res) => {
   try {
+    console.log("ran1");
     const { username } = req.params;
-    console.log("ran");
+    console.log("ran2");
 
     if (!username) {
       return res.status(400).json({ message: "Please provide a username" });
     }
 
-    const user = await User.findOne({ username }).exec();
+    const user = await User.findOne({ username }).lean().exec();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

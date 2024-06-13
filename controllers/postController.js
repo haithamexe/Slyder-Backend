@@ -250,7 +250,7 @@ exports.getPostsByUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const posts = await Post.find({ user: user._id }).lean().exec();
+    const posts = await Post.find({ user: user }).lean().exec();
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return res.status(200).json(posts);
   } catch (error) {

@@ -2009,3 +2009,5 @@
 20240520	08:25:50	ae0a9e28-16db-4f8e-9362-207a617e58ae	GET	undefined	/api/user/username/ahmedmonar913
 20240520	08:25:53	7944ad23-dfac-4ab0-b64d-57d4f35a7fdc	GET	undefined	/api/user/username/ahmedmonar913
 20240520	08:50:27	e463e3a9-70fe-450a-9789-aef3832124ce	GET	undefined	/favicon.ico
+20240612	07:42:45	89e2cfd8-7b90-4dee-871c-63c4cac728c3	PUT	http://localhost:3000	/api/user/update/664c8bc4a8348082a72a823d
+20240612	07:42:51	506e498a-c32a-4efe-8f2e-260bc4df87a7	PUT	http://localhost:3000	/api/user/update/664c8bc4a8348082a72a823d

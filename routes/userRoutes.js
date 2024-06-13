@@ -32,7 +32,7 @@ router.post("/refresh", refresh);
 router.post("/auth", auth);
 router.post("/refreshActivation", refreshActivationToken);
 router.delete("/delete", deleteUser);
-router.put("/update", updateUser);
+router.put("/update/:id", updateUser);
 router.get("/", getUsers);
 router.get("/username/:username", getUserByUsername);
 router.put("/:userId/follow", followUser);
