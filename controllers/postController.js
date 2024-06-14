@@ -103,7 +103,11 @@ exports.deletePost = async (req, res) => {
 
 exports.likePost = async (req, res) => {
   try {
-    const { postId, userId } = req.body;
+    const { userId } = req.body;
+    const { postId } = req.params;
+    if (!userId || !postId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -137,7 +141,11 @@ exports.likePost = async (req, res) => {
 
 exports.unlikePost = async (req, res) => {
   try {
-    const { postId, userId } = req.body;
+    const { userId } = req.body;
+    const { postId } = req.params;
+    if (!userId || !postId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -146,13 +154,14 @@ exports.unlikePost = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    post.likes = post.likes.filter(
-      (like) => like.toString() !== user._id.toString()
-    );
-    const like = await Like.findOne({ post: post._id, user: user._id }).exec();
-    if (like) {
-      await like.remove();
+    const currentLike = await Like.findOneAndDelete({
+      post: post._id,
+      user: user._id,
+    }).exec();
+    if (!currentLike) {
+      return res.status(404).json({ message: "Like not found" });
     }
+    post.likes = post.likes.filter((like) => currentLike._id !== like._id);
     await post.save();
     res.status(201).json({ message: "Post unliked successfully" });
   } catch (error) {
@@ -227,63 +236,78 @@ exports.getPostComments = async (req, res) => {
 
 exports.getPostLikes = async (req, res) => {
   try {
-    const { postId } = req.params;
-    const post = await Post.findById(postId).exec();
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    const likes = await Like.find({ post: post._id }).lean().exec();
-    res.status(200).json(likes);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-exports.getPostsByUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    if (!userId) {
+    const { postId, userId } = req.params;
+    if (!userId || !postId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
     const user = await User.findById(userId).exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const posts = await Post.find({ user: user }).lean().exec();
-    posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    return res.status(200).json(posts);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
-
-exports.getSavedPostsByUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const user = await User.findById(userId).lean().exec();
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const post = await Post.findById(postId).exec();
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
-
-    const saved = await Saved.findOne({ user: user._id }).lean().exec();
-    if (!saved) {
-      return res.status(404).json({ message: "Saved posts not found" });
-    }
-    const posts = await Post.find({ _id: { $in: saved.posts } })
-      .lean()
-      .exec();
-    res.status(200).json(posts);
+    const likes = await Like.find({ post: post._id }).lean().exec();
+    const userHasLiked = likes.some(
+      (like) => like.user.toString() === user._id.toString()
+    );
+    res.status(200).json({ likes, userHasLiked });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+// exports.getPostsByUser = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     if (!userId) {
+//       return res.status(400).json({ message: "Please provide an id" });
+//     }
+//     const user = await User.findById(userId).exec();
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+//     const posts = await Post.find({ user: user }).lean().exec();
+//     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+//     // const sendPostsIds = posts.map((post) => post._id);
+//     return res.status(200).json(posts);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+// exports.getSavedPostsByUser = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     const user = await User.findById(userId).lean().exec();
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     const saved = await Saved.findOne({ user: user._id }).lean().exec();
+//     if (!saved) {
+//       return res.status(404).json({ message: "Saved posts not found" });
+//     }
+//     const posts = await Post.find({ _id: { $in: saved.posts } })
+//       .lean()
+//       .exec();
+//     res.status(200).json(posts);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.getHomePosts = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).lean().exec();
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
+    const user = await User.findById(userId).lean().exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -294,28 +318,11 @@ exports.getHomePosts = async (req, res) => {
     const userPosts = await Post.find({ user: user._id }).lean().exec();
     const posts = [...followingPosts, ...userPosts];
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    res.status(200).json(posts);
+    const sendPostsIds = posts.map((post) => post._id);
+    res.status(200).json(sendPostsIds);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-exports.getPostsByFollowing = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const user = await User.findById(userId).lean().exec();
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    const following = user.following;
-    const posts = await Post.find({ user: { $in: following } })
-      .lean()
-      .exec();
-    res.status(200).json(posts);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error while getting home posts" });
   }
 };
 
@@ -355,6 +362,43 @@ exports.unsavePost = async (req, res) => {
     );
     await saved.save();
     res.status(200).json({ message: "Post unsaved successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPostsByUserName = async (req, res) => {
+  try {
+    const { userName } = req.params;
+    const user = await User.findOne({ username: userName }).lean().exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const posts = await Post.find({ user: user._id }).lean().exec();
+    posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getSavedPosts = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).lean().exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const saved = await Saved.findOne({ user: user._id }).lean().exec();
+    if (!saved) {
+      return res.status(404).json({ message: "Saved posts not found" });
+    }
+    const posts = await Post.find({ _id: { $in: saved.posts } })
+      .lean()
+      .exec();
+    res.status(200).json(posts);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

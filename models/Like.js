@@ -8,16 +8,17 @@ const likeSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    likedItem: {
+    post: {
       type: ObjectId,
+      ref: "Post",
       required: true,
-      refPath: "onModel",
     },
-    onModel: {
-      type: String,
-      required: true,
-      enum: ["Post", "Comment"], // Add other models as needed
-    },
+    // Add other models as needed
+    // onModel: {
+    //   type: String,
+    //   required: true,
+    //   enum: ["Post", "Comment"],
+    // },
     createdAt: {
       type: Date,
       default: Date.now,
