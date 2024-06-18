@@ -368,13 +368,13 @@ exports.updateUser = async (req, res) => {
       firstName,
       surName,
       password,
-      profilePic,
-      coverPic,
+      picture,
+      cover,
       bio,
       skills,
       website,
     } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
 
     const id = req.params.id;
 
@@ -436,22 +436,24 @@ exports.updateUser = async (req, res) => {
       user.password = hashedPassword;
     }
 
-    if (profilePic) {
-      await cloudinary.uploader.destroy(user.picture);
-      const profile = await cloudinary.uploader.upload(profilePic, {
-        upload_preset: "slyder",
+    if (picture) {
+      if (user.picture) {
+        await cloudinary.uploader.destroy(user.picture);
+      }
+      const cloudinaryResponse = await cloudinary.uploader.upload(picture, {
+        folder: "slyder",
       });
-
-      user.picture = profile.secure_url;
+      user.picture = cloudinaryResponse.secure_url;
     }
 
-    if (coverPic) {
-      await cloudinary.uploader.destroy(user.cover);
-      const cover = await cloudinary.uploader.upload(coverPic, {
-        upload_preset: "slyder",
+    if (cover) {
+      if (user.cover) {
+        await cloudinary.uploader.destroy(user.cover);
+      }
+      const cloudinaryResponse = await cloudinary.uploader.upload(cover, {
+        folder: "slyder",
       });
-
-      user.cover = cover.secure_url;
+      user.cover = cloudinaryResponse.secure_url;
     }
 
     if (bio) {

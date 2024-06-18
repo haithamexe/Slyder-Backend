@@ -15,6 +15,7 @@ const {
   getPostComments,
   getHomePosts,
   getPostsByUserName,
+  getPostCommentById,
 } = require("../controllers/postController");
 
 router.post("/create", createPost);
@@ -32,5 +33,6 @@ router.get("/:postId/likes/:userId", getPostLikes);
 router.get("/:postId/comments", getPostComments);
 router.get("/home/:userId", getHomePosts);
 router.get("/user/:userName", getPostsByUserName);
+router.get("/comment/:commentId", getPostCommentById);
 
 module.exports = router;

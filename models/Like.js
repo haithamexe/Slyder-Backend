@@ -11,7 +11,12 @@ const likeSchema = new mongoose.Schema(
     post: {
       type: ObjectId,
       ref: "Post",
-      required: true,
+      // required: true,
+    },
+    comment: {
+      type: ObjectId,
+      ref: "Comment",
+      // required: true,
     },
     // Add other models as needed
     // onModel: {
@@ -19,10 +24,6 @@ const likeSchema = new mongoose.Schema(
     //   required: true,
     //   enum: ["Post", "Comment"],
     // },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
   },
   { timestamps: true }
 );

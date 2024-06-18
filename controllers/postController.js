@@ -172,7 +172,11 @@ exports.unlikePost = async (req, res) => {
 
 exports.commentPost = async (req, res) => {
   try {
-    const { postId, userId, comment } = req.body;
+    const { userId, comment } = req.body;
+    const { postId } = req.params;
+    if (!userId || !postId || !comment) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -182,8 +186,8 @@ exports.commentPost = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     const newComment = new Comment({
-      comment,
-      user: user._id,
+      content: comment,
+      author: user._id,
       post: post._id,
     });
     await newComment.save();
@@ -198,7 +202,11 @@ exports.commentPost = async (req, res) => {
 
 exports.uncommentPost = async (req, res) => {
   try {
-    const { postId, commentId } = req.body;
+    const { commentId } = req.body;
+    const { postId } = req.params;
+    if (!commentId || !postId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -227,7 +235,8 @@ exports.getPostComments = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
     const comments = await Comment.find({ post: post._id }).lean().exec();
-    res.status(200).json(comments);
+    const commentsIds = comments.map((comment) => comment._id);
+    res.status(200).json(commentsIds);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -256,6 +265,35 @@ exports.getPostLikes = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPostCommentById = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    if (!commentId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
+    const comment = await Comment.findById(commentId).lean().exec();
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+    const user = await User.findById(comment.author).lean().exec();
+
+    const commentData = {
+      user: {
+        username: user.username,
+        picture: user.picture,
+      },
+      content: comment.content,
+      createdAt: comment.createdAt,
+      likesCount: comment.likes.length,
+      id: comment._id,
+    };
+    res.status(200).json(commentData);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: "Server error " + error.message });
   }
 };
 
