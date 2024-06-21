@@ -13,6 +13,8 @@ const socketIO = require("socket.io");
 const http = require("http");
 const cloudinary = "./config/cloudinaryConfig";
 const bodyParser = require("body-parser");
+const { app, server } = require("./socket");
+
 // const errorHandler = require("./middleware/errorHandler");
 // const verifyJWT = require("./middleware/verifyJWT");
 // const cookieParser = require("cookie-parser");
@@ -21,7 +23,7 @@ const bodyParser = require("body-parser");
 const PORT = process.env.PORT || 8000;
 
 dbConnect();
-const app = express();
+// const app = express();
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -33,6 +35,7 @@ app.get("/", (req, res) => {
 });
 app.use("/api/user", require("./routes/userRoutes"));
 app.use("/api/post", require("./routes/postRoutes"));
+app.use("/api/message", require("./routes/messageRoutes"));
 
 app.use(logger);
 app.use(errorHandler);
@@ -46,20 +49,20 @@ app.use((err, req, res, next) => {
   next();
 });
 
-const server = http.createServer(app);
-const io = socketIO(server, {
-  cors: corsOptions,
-});
+// const server = http.createServer(app);
+// const io = socketIO(server, {
+//   cors: corsOptions,
+// });
 
-io.on("connection", (socket) => {
-  console.log("socket connected");
-  socket.on("send_message", (data) => {
-    console.log("this is socket message", data);
-  });
-  socket.on("disconnect", () => {
-    console.log("socket disconnected");
-  });
-});
+// io.on("connection", (socket) => {
+//   console.log("socket connected");
+//   socket.on("send_message", (data) => {
+//     console.log("this is socket message", data);
+//   });
+//   socket.on("disconnect", () => {
+//     console.log("socket disconnected");
+//   });
+// });
 
 mongoose.connection.once("open", () => {
   console.log("connected to database");

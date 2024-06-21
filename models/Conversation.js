@@ -13,6 +13,7 @@ const conversationSchema = new mongoose.Schema(
       {
         type: ObjectId,
         ref: "Message",
+        default: [],
       },
     ],
     lastMessage: {

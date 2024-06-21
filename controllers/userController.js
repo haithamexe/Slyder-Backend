@@ -4,7 +4,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Post = require("../models/Post");
 const Saved = require("../models/Saved");
-const { generateToken } = require("../helpers/tokens");
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
 const { sendEmail } = require("../helpers/mailer");
 const {
   registerValidation,
@@ -121,6 +122,14 @@ exports.activateAccount = async (req, res) => {
       path: "/api/user/",
     });
 
+    res.cookie("refreshTokenAuth", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/api/message/",
+    });
+
     const accessToken = jwt.sign(
       { id: user._id.toString() },
       process.env.JWT_ACCESS_SECRET,
@@ -202,6 +211,14 @@ exports.login = async (req, res) => {
       path: "/api/user/",
     });
 
+    res.cookie("refreshTokenAuth", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/api/message/",
+    });
+
     const accessToken = jwt.sign(
       { id: user._id.toString() },
       process.env.JWT_ACCESS_SECRET,
@@ -279,9 +296,6 @@ exports.auth = async (req, res) => {
 
     console.log("Authed: ", refreshDecoded.id, accessDecoded.id);
 
-    const followersNum = user.followers.length;
-    const followingNum = user.following.length;
-
     if (!user.picture) {
       user.picture =
         "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic";
@@ -297,8 +311,6 @@ exports.auth = async (req, res) => {
       verified: user.verified,
       picture: user.picture,
       cover: user.cover,
-      followersNum: followersNum,
-      followingNum: followingNum,
       bio: user?.details?.bio,
       skills: user?.details?.skills,
       website: user?.details?.website,
@@ -485,32 +497,30 @@ exports.updateUser = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
-    const id = req.params.id;
-    if (!id) {
+    const { userId } = req.params;
+    if (!userId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const user = await User.findById(id).lean().exec();
-    // console.log(user);
+    const user = await User.findById(userId).lean().exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     if (!user.picture) {
       user.picture =
         "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic";
     }
-    if (user) {
-      const userdata = {
-        id: user._id,
-        username: user.username,
-        firstName: user.firstName,
-        surName: user.surName,
-        picture: user.picture,
-        cover: user.cover,
-        bio: user.details.bio,
-        skills: user.details.skills,
-        website: user.details.website,
-      };
-      return res.status(200).json(userdata);
-    } else {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const userdata = {
+      id: user._id,
+      username: user.username,
+      firstName: user.firstName,
+      surName: user.surName,
+      picture: user.picture,
+      cover: user.cover,
+      bio: user?.details?.bio,
+      skills: user?.details?.skills,
+      website: user?.details?.website,
+    };
+    return res.status(200).json(userdata);
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -663,12 +673,14 @@ exports.unsuspendUser = async (req, res) => {
 
 exports.followUser = async (req, res) => {
   try {
-    const { id, followId } = req.body;
-    if (!id || !followId) {
+    const { userId } = req.params;
+    const { followId } = req.body;
+    if (!userId || !followId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const user = await User.findById(id).exec();
+    const user = await User.findById(userId).exec();
     const followUser = await User.findById(followId).exec();
+
     if (!user || !followUser) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -676,7 +688,7 @@ exports.followUser = async (req, res) => {
       return res.status(409).json({ message: "User already followed" });
     }
     user.following.push(followId);
-    followUser.followers.push(id);
+    followUser.followers.push(userId);
     await user.save();
     await followUser.save();
     return res.status(200).json({ message: "User followed" });
@@ -687,22 +699,26 @@ exports.followUser = async (req, res) => {
 
 exports.unfollowUser = async (req, res) => {
   try {
-    const { id, followId } = req.body;
-    if (!id || !followId) {
+    const { userId } = req.params;
+    const { unFollowId } = req.body;
+    if (!userId || !unFollowId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const user = await User.findById(id).exec();
-    const followUser = await User.findById(followId).exec();
-    if (!user || !followUser) {
+    const user = await User.findById(userId).exec();
+    const unFollowUser = await User.findById(unFollowId).exec();
+
+    if (!user || !unFollowUser) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (!user.following.includes(followId)) {
-      return res.status(409).json({ message: "User not followed" });
+    if (!user.following.includes(unFollowId)) {
+      return res.status(409).json({ message: "User already unfollowed" });
     }
-    user.following = user.following.filter((item) => item !== followId);
-    followUser.followers = followUser.followers.filter((item) => item !== id);
+    user.following = user.following.filter((id) => id !== unFollowId);
+    unFollowUser.followers = unFollowUser.followers.filter(
+      (id) => id !== userId
+    );
     await user.save();
-    await followUser.save();
+    await unFollowUser.save();
     return res.status(200).json({ message: "User unfollowed" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -711,18 +727,15 @@ exports.unfollowUser = async (req, res) => {
 
 exports.getFollowers = async (req, res) => {
   try {
-    const { id } = req.body;
-    if (!id) {
+    const { userId } = req.params;
+    if (!userId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const user = await User.findById(id).exec();
+    const user = await User.findById(userId).lean().exec(); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const followers = await User.find({ _id: { $in: user.followers } })
-      .select("username firstName surName picture")
-      .lean()
-      .exec();
+    const followers = user.followers;
     return res.status(200).json(followers);
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -731,18 +744,17 @@ exports.getFollowers = async (req, res) => {
 
 exports.getFollowing = async (req, res) => {
   try {
-    const { id } = req.body;
-    if (!id) {
+    const { userId } = req.params;
+    if (!userId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const user = await User.findById(id).exec();
+    const user = await User.findById(userId).lean().exec(); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const following = await User.find({ _id: { $in: user.following } })
-      .select("username firstName surName picture")
-      .lean()
-      .exec();
+    const following = user.following;
+    console.log("/////////////////////////////asd");
+    console.log(following);
     return res.status(200).json(following);
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -825,18 +837,37 @@ exports.updateUserPassword = async (req, res) => {
   }
 };
 
-// exports.getPostsByUser = async (req, res) => {
-//   try {
-//     const { id } = req.body;
-//     if (!id) {
-//       return res.status(400).json({ message: "Please provide an id" });
-//     }
-//     const posts = await Post.find({ user: id })
-//       .select("title description image")
-//       .lean()
-//       .exec();
-//     return res.status(200).json(posts);
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// };
+exports.getUserContacts = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
+    const user = await User.findById(userId).lean().exec();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const userContacts = user.following;
+    let allUsersForContact = [];
+
+    const userWithConvos = await Conversation.find({
+      participants: {
+        $all: [userId],
+      },
+    })
+      .lean()
+      .exec();
+    const usersInConvos = userWithConvos.participants;
+    if (usersInConvos) {
+      allUsersForContact = new Set([...userContacts, ...usersInConvos]);
+    } else {
+      allUsersForContact = userContacts;
+    }
+
+    console.log(allUsersForContact, userWithConvos);
+    return res.status(200).json(allUsersForContact);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};

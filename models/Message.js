@@ -13,12 +13,12 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    reciver: {
+    receiver: {
       type: ObjectId,
       ref: "User",
       required: true,
     },
-    content: {
+    message: {
       type: String,
       required: true,
     },

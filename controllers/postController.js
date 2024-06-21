@@ -27,20 +27,20 @@ exports.createPost = async (req, res) => {
       user: user._id,
     });
     await newPost.save();
-    res.status(201).json(newPost);
+    return res.status(201).json(newPost);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
 exports.getPosts = async (req, res) => {
   try {
     const posts = await Post.find().lean().exec();
-    res.status(200).json(posts);
+    return res.status(200).json(posts);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -54,10 +54,10 @@ exports.getPostById = async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    res.status(200).json(post);
+    return res.status(200).json(post);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -94,10 +94,10 @@ exports.deletePost = async (req, res) => {
       await cloudinary.uploader.destroy(post.image);
     }
     await Post.findByIdAndDelete(post._id);
-    res.status(200).json({ message: "Post deleted successfully" });
+    return res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -132,10 +132,10 @@ exports.likePost = async (req, res) => {
     await like.save();
     post.likes.push(like._id);
     await post.save();
-    res.status(201).json({ message: "Post liked successfully" });
+    return res.status(201).json({ message: "Post liked successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -193,10 +193,10 @@ exports.commentPost = async (req, res) => {
     await newComment.save();
     post.comments.push(newComment._id);
     await post.save();
-    res.status(201).json({ message: "Comment added successfully" });
+    return res.status(201).json({ message: "Comment added successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -230,16 +230,22 @@ exports.uncommentPost = async (req, res) => {
 exports.getPostComments = async (req, res) => {
   try {
     const { postId } = req.params;
+    if (!postId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
     const comments = await Comment.find({ post: post._id }).lean().exec();
+    if (!comments) {
+      return res.status(404).json({ message: "Comments not found" });
+    }
     const commentsIds = comments.map((comment) => comment._id);
-    res.status(200).json(commentsIds);
+    return res.status(200).json(commentsIds);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -290,10 +296,10 @@ exports.getPostCommentById = async (req, res) => {
       likesCount: comment.likes.length,
       id: comment._id,
     };
-    res.status(200).json(commentData);
+    return res.status(200).json(commentData);
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ message: "Server error " + error.message });
+    return res.status(500).json({ message: "Server error " + error.message });
   }
 };
 
@@ -357,41 +363,60 @@ exports.getHomePosts = async (req, res) => {
     const posts = [...followingPosts, ...userPosts];
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const sendPostsIds = posts.map((post) => post._id);
-    res.status(200).json(sendPostsIds);
+    return res.status(200).json(sendPostsIds);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error while getting home posts" });
+    return res
+      .status(500)
+      .json({ message: "Server error while getting home posts" });
   }
 };
 
 exports.savePost = async (req, res) => {
   try {
-    const { postId, userId } = req.body;
+    const { postId, userId } = req.params;
+
+    if (!postId || !userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const user = await User.findById(userId).lean().exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const saved = await Saved.findOne({ user: user._id }).lean().exec();
-    if (!saved) {
-      return res.status(404).json({ message: "Saved posts not found" });
+    const post = await Post.findById(postId).lean().exec();
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
-    saved.posts.push(postId);
+    let saved = await Saved.findOne({ user: user._id }).exec();
+    if (!saved) {
+      saved = new Saved({
+        user: user._id,
+      });
+    }
+    saved.posts.push(post._id);
     await saved.save();
-    res.status(200).json({ message: "Post saved successfully" });
+    return res.status(200).json({ message: "Post saved successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
 exports.unsavePost = async (req, res) => {
   try {
-    const { postId, userId } = req.body;
+    const { postId, userId } = req.params;
+    if (!postId || !userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const user = await User.findById(userId).lean().exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const saved = await Saved.findOne({ user: user._id }).lean().exec();
+    const post = await Post.findById(postId).lean().exec();
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    const saved = await Saved.findOne({ user: user._id }).exec();
     if (!saved) {
       return res.status(404).json({ message: "Saved posts not found" });
     }
@@ -399,32 +424,39 @@ exports.unsavePost = async (req, res) => {
       (post) => post.toString() !== postId.toString()
     );
     await saved.save();
-    res.status(200).json({ message: "Post unsaved successfully" });
+    return res.status(200).json({ message: "Post unsaved successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
 exports.getPostsByUserName = async (req, res) => {
   try {
     const { userName } = req.params;
+    if (!userName) {
+      return res.status(400).json({ message: "Please provide a username" });
+    }
     const user = await User.findOne({ username: userName }).lean().exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     const posts = await Post.find({ user: user._id }).lean().exec();
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    res.status(200).json(posts);
+    return res.status(200).json(posts);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
 exports.getSavedPosts = async (req, res) => {
   try {
     const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
     const user = await User.findById(userId).lean().exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -436,10 +468,48 @@ exports.getSavedPosts = async (req, res) => {
     const posts = await Post.find({ _id: { $in: saved.posts } })
       .lean()
       .exec();
-    res.status(200).json(posts);
+    return res.status(200).json(posts);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPostSavedByPostId = async (req, res) => {
+  try {
+    const { postId, userId } = req.params;
+    if (!postId || !userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
+    const post = await Post.findById(postId).lean().exec();
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    const user = await User.findById(userId).lean().exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const saved = await Saved.findOne({
+      user: user._id,
+    })
+      .lean()
+      .exec();
+
+    if (!saved) {
+      return res.status(404).json({ message: "Saved posts not found" });
+    }
+
+    const postSaved = saved.posts.some(
+      (savedPost) => savedPost.toString() === postId.toString()
+    );
+
+    if (!postSaved) {
+      return res.status(200).json({ saved: false });
+    }
+    return res.status(200).json({ saved: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
