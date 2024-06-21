@@ -50,14 +50,14 @@ exports.getPostById = async (req, res) => {
     if (!postId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const post = await Post.findById(postId).lean().exec();
+    const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
     return res.status(200).json(post);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: error.message });
+    console.error(error?.message);
+    return res.status(500).json({ message: error?.message });
   }
 };
 
@@ -237,14 +237,14 @@ exports.getPostComments = async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    const comments = await Comment.find({ post: post._id }).lean().exec();
+    const comments = await Comment.find({ post: post?._id }).lean().exec();
     if (!comments) {
       return res.status(404).json({ message: "Comments not found" });
     }
-    const commentsIds = comments.map((comment) => comment._id);
+    const commentsIds = comments.map((comment) => comment?._id);
     return res.status(200).json(commentsIds);
   } catch (error) {
-    console.error(error);
+    console.error(error.message);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -303,48 +303,6 @@ exports.getPostCommentById = async (req, res) => {
   }
 };
 
-// exports.getPostsByUser = async (req, res) => {
-//   try {
-//     const { userId } = req.params;
-//     if (!userId) {
-//       return res.status(400).json({ message: "Please provide an id" });
-//     }
-//     const user = await User.findById(userId).exec();
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-//     const posts = await Post.find({ user: user }).lean().exec();
-//     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-//     // const sendPostsIds = posts.map((post) => post._id);
-//     return res.status(200).json(posts);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ message: "Server error" });
-//   }
-// };
-
-// exports.getSavedPostsByUser = async (req, res) => {
-//   try {
-//     const { userId } = req.params;
-//     const user = await User.findById(userId).lean().exec();
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     const saved = await Saved.findOne({ user: user._id }).lean().exec();
-//     if (!saved) {
-//       return res.status(404).json({ message: "Saved posts not found" });
-//     }
-//     const posts = await Post.find({ _id: { $in: saved.posts } })
-//       .lean()
-//       .exec();
-//     res.status(200).json(posts);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
 exports.getHomePosts = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -369,6 +327,19 @@ exports.getHomePosts = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Server error while getting home posts" });
+  }
+};
+
+exports.getTrendingPosts = async (req, res) => {
+  try {
+    const posts = await Post.find({}).exec();
+    posts.sort((a, b) => b.likes.length - a.likes.length);
+    const postsId = posts.map((post) => post?._id);
+    console.log(postsId);
+    return res.status(200).json(postsId);
+  } catch (error) {
+    console.error(error.message);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -512,14 +483,3 @@ exports.getPostSavedByPostId = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
-// exports.getPostsByCommunity = async (req, res) => {
-//   try {
-//     const { communityId } = req.params;
-//     const posts = await Post.find({ community: communityId }).lean().exec();
-//     res.status(200).json(posts);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };

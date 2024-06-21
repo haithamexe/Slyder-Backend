@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const {
   createPost,
-  getPosts,
   getPostById,
   updatePost,
   deletePost,
@@ -17,11 +16,11 @@ const {
   getPostsByUserName,
   getPostCommentById,
   getPostSavedByPostId,
+  getTrendingPosts,
 } = require("../controllers/postController");
 
+router.get("/trend", getTrendingPosts);
 router.post("/create", createPost);
-router.get("/", getPosts);
-router.get("/:postId", getPostById);
 router.put("/:postId", updatePost);
 router.delete("/:postId", deletePost);
 router.put("/:postId/like", likePost);
@@ -36,5 +35,6 @@ router.get("/comment/:commentId", getPostCommentById);
 router.get("/saved/:postId/:userId", getPostSavedByPostId);
 router.put("/save/:postId/:userId", savePost);
 router.delete("/save/:postId/:userId", unsavePost);
+router.get("/:postId", getPostById);
 
 module.exports = router;

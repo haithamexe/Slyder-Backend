@@ -122,12 +122,28 @@ exports.activateAccount = async (req, res) => {
       path: "/api/user/",
     });
 
-    res.cookie("refreshTokenAuth", refreshToken, {
+    res.cookie("refreshTokenMessage", refreshToken, {
       httpOnly: true,
       sameSite: "none",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/api/message/",
+    });
+
+    res.cookie("refreshTokenNotes", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/api/note/",
+    });
+
+    res.cookie("refreshTokenPost", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/api/post/",
     });
 
     const accessToken = jwt.sign(
@@ -211,12 +227,28 @@ exports.login = async (req, res) => {
       path: "/api/user/",
     });
 
-    res.cookie("refreshTokenAuth", refreshToken, {
+    res.cookie("refreshTokenMessage", refreshToken, {
       httpOnly: true,
       sameSite: "none",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/api/message/",
+    });
+
+    res.cookie("refreshTokenNote", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/api/note/",
+    });
+
+    res.cookie("refreshTokenPost", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/api/post/",
     });
 
     const accessToken = jwt.sign(
@@ -329,6 +361,9 @@ exports.auth = async (req, res) => {
 exports.logout = async (req, res) => {
   try {
     res.clearCookie("refreshToken", { path: "/api/user/" });
+    res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
+    res.clearCookie("refreshTokenNote", { path: "/api/note/" });
+    res.clearCookie("refreshTokenPost", { path: "/api/post/" });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
     return res.status(500).json({ message: err.message });

@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const protectRoute = require("../middleware/protectRoute");
+const { protectMessageRoute } = require("../middleware/protectRoute");
 
 const {
   createMessage,
@@ -10,10 +10,10 @@ const {
   deleteConversation,
 } = require("../controllers/messageController");
 
-router.post("/create/:receiverId", protectRoute, createMessage);
+router.post("/create/:receiverId", protectMessageRoute, createMessage);
 // router.get("/", getMessages);
 // router.delete("/:messageId", deleteMessage);
-router.get("/conversation/:receiverId", protectRoute, getConversation);
+router.get("/conversation/:receiverId", protectMessageRoute, getConversation);
 // router.post("/conversation/:receiverId", createConversation);
 // router.delete("/conversation/:receiverId", deleteConversation);
 

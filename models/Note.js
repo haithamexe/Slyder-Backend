@@ -7,18 +7,18 @@ const noteSchema = mongoose.Schema(
     title: {
       type: String,
       required: true,
-      min: 3,
-      max: 15,
-      trim: true,
-      text: true,
+      min: 2,
+      max: 20,
     },
     content: {
       type: String,
       required: true,
-      min: 3,
-      max: 15,
-      trim: true,
-      text: true,
+      min: 2,
+      max: 20,
+    },
+    user: {
+      type: ObjectId,
+      ref: "User",
     },
   },
   { timestamps: true }
