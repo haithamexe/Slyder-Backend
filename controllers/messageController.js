@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const cloudinary = require("../config/cloudinaryConfig");
+const { io } = require("../socket");
 
 exports.createMessage = async (req, res) => {
   try {
@@ -21,19 +22,61 @@ exports.createMessage = async (req, res) => {
     if (!conversation) {
       conversation = new Conversation({
         participants: [sender._id, receiver._id],
-      }).exec();
+      });
+      await conversation.save();
     }
     const newMessage = new Message({
-      conversationId: conversation?._id,
+      conversation: conversation._id,
       sender: sender._id,
       receiver: receiver._id,
       message: req.body.message,
+      status: "sent",
     });
     conversation.messages.push(newMessage._id);
 
     await Promise.all([newMessage.save(), conversation.save()]);
 
+    // Emit the new message to the conversation room
+    io.to(conversation._id.toString()).emit("newMessage", newMessage);
+
     return res.status(200).json(newMessage);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json(err);
+  }
+};
+
+exports.updateMessageStatus = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+
+    if (!messageId) {
+      return res.status(400).json({ message: "Message ID is required" });
+    }
+
+    const user = req.user;
+    const message = await Message.findById(messageId).exec();
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (message.receiver.toString() !== user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to update this message" });
+    }
+
+    message.status = "seen";
+    await message.save();
+
+    // Emit the updated message status to the conversation room
+    io.to(message?.conversation.toString()).emit(
+      "messageStatusUpdated",
+      message
+    );
+
+    return res.status(200).json(message);
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
@@ -61,7 +104,7 @@ exports.getConversation = async (req, res) => {
     if (!conversation) {
       const newConversation = new Conversation({
         participants: [sender._id, receiver._id],
-      }).exec();
+      });
       await newConversation.save();
     }
 
@@ -70,7 +113,6 @@ exports.getConversation = async (req, res) => {
     });
     const conversationData = {
       _id: conversation._id,
-      messages,
       user: {
         _id: receiver._id,
         username: receiver.username,
@@ -87,6 +129,68 @@ exports.getConversation = async (req, res) => {
     return res.status(200).json(conversationData);
   } catch (err) {
     console.log(err.message);
+    return res.status(500).json(err);
+  }
+};
+
+exports.getMessages = async (req, res) => {
+  try {
+    const { receiverId } = req.params;
+    const user = req.user;
+    if (!receiverId || !user) {
+      return res
+        .status(400)
+        .json({ message: "receiverId ID and User ID are required" });
+    }
+    const conversation = await Conversation.findOne({
+      participants: { $all: [user._id, receiverId] },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    const messages = await Message.find({
+      conversation: conversation._id,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .exec();
+    // io.to(conversationId).emit("message", messages);
+
+    return res.status(200).json(messages);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json(err);
+  }
+};
+
+exports.deleteConversation = async (req, res) => {
+  try {
+    const { receiverId } = req.params;
+    const user = req.user;
+    if (!receiverId || !user) {
+      return res
+        .status(400)
+        .json({ message: "Receiver ID and User ID are required" });
+    }
+    const conversationDeleted = await Conversation.findOneAndDelete({
+      participants: { $all: [user._id, receiverId] },
+    });
+
+    if (!conversationDeleted) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    user.contacts.pull(receiverId);
+    await user.save();
+
+    // await conversation.remove();
+    return res
+      .status(200)
+      .json({ message: "Conversation deleted successfully" });
+  } catch (err) {
+    console.log(err);
     return res.status(500).json(err);
   }
 };

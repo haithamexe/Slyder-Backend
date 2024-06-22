@@ -724,6 +724,15 @@ exports.followUser = async (req, res) => {
     }
     user.following.push(followId);
     followUser.followers.push(userId);
+
+    // user.notifications.push({
+    //   type: "follow",
+    //   user: followId,
+    // });
+
+    user.contacts.push(followId);
+    followUser.contacts.push(userId);
+
     await user.save();
     await followUser.save();
     return res.status(200).json({ message: "User followed" });
@@ -883,25 +892,8 @@ exports.getUserContacts = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const userContacts = user.following;
-    let allUsersForContact = [];
-
-    const userWithConvos = await Conversation.find({
-      participants: {
-        $all: [userId],
-      },
-    })
-      .lean()
-      .exec();
-    const usersInConvos = userWithConvos.participants;
-    if (usersInConvos) {
-      allUsersForContact = new Set([...userContacts, ...usersInConvos]);
-    } else {
-      allUsersForContact = userContacts;
-    }
-
-    console.log(allUsersForContact, userWithConvos);
-    return res.status(200).json(allUsersForContact);
+    const userContacts = user?.contacts;
+    return res.status(200).json(userContacts);
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }

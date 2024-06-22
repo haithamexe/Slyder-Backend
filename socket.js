@@ -18,6 +18,16 @@ io.on("connection", (socket) => {
     userSocketMap[userId] = socket.id;
   }
 
+  socket.on("joinRoom", (conversationId) => {
+    socket.join(conversationId);
+    console.log(`User joined room ${conversationId}`);
+  });
+
+  socket.on("leaveRoom", (conversationId) => {
+    socket.leave(conversationId);
+    console.log(`User left room ${conversationId}`);
+  });
+
   io.emit("onlineUsers", Object.keys(userSocketMap));
   console.log("user connected", socket.id, userId);
 

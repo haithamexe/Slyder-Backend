@@ -79,6 +79,10 @@ const userSchema = mongoose.Schema(
       type: Array,
       default: [],
     },
+    contacts: {
+      type: Array,
+      default: [],
+    },
     requests: {
       type: Array,
       default: [],

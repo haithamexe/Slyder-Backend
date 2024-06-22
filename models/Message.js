@@ -3,7 +3,7 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const messageSchema = new mongoose.Schema(
   {
-    conversationId: {
+    conversation: {
       type: ObjectId,
       ref: "Conversation",
       required: true,
@@ -24,12 +24,11 @@ const messageSchema = new mongoose.Schema(
     },
     messageType: {
       type: String,
-      enum: ["text", "image", "video", "link"],
       default: "text",
     },
     status: {
       type: String,
-      enum: ["sent", "delivered", "read"],
+      enum: ["sent", "seen"],
       default: "sent",
     },
   },
