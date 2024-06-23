@@ -4,6 +4,7 @@ const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const cloudinary = require("../config/cloudinaryConfig");
 const { io } = require("../socket");
+const { encrypt, decrypt } = require("../utility/cryptoUtil");
 
 exports.createMessage = async (req, res) => {
   try {
@@ -25,11 +26,14 @@ exports.createMessage = async (req, res) => {
       });
       await conversation.save();
     }
+
+    const encryptedMessage = encrypt(req.body.message);
+
     const newMessage = new Message({
       conversation: conversation._id,
       sender: sender._id,
       receiver: receiver._id,
-      message: req.body.message,
+      message: encryptedMessage,
       status: "sent",
     });
     conversation.messages.push(newMessage._id);
@@ -111,6 +115,16 @@ exports.getConversation = async (req, res) => {
     const messages = await Message.find({
       _id: { $in: conversation?.messages },
     });
+
+    // console.log("messages", messages);
+    // console.log("lastMessage", lastMessage);
+    let lastMessageDecrypted = "";
+    if (messages.length > 0) {
+      const lastMessage = messages[messages?.length - 1]?.message;
+      lastMessageDecrypted = decrypt(lastMessage);
+    } else {
+    }
+
     const conversationData = {
       _id: conversation._id,
       user: {
@@ -121,7 +135,7 @@ exports.getConversation = async (req, res) => {
         surName: receiver.surName,
       },
       lastMessage: {
-        message: messages[messages?.length - 1]?.message,
+        message: lastMessageDecrypted,
         createdAt: messages[messages?.length - 1]?.createdAt,
       },
     };
@@ -129,6 +143,7 @@ exports.getConversation = async (req, res) => {
     return res.status(200).json(conversationData);
   } catch (err) {
     console.log(err.message);
+    console.log(err);
     return res.status(500).json(err);
   }
 };
@@ -156,14 +171,34 @@ exports.getMessages = async (req, res) => {
         createdAt: -1,
       })
       .exec();
+
+    const decryptedMessages = messages.map((message) => {
+      try {
+        const decryptedMessage = decrypt(message.message);
+        return {
+          ...message._doc,
+          message: decryptedMessage,
+        };
+      } catch (error) {
+        console.error("Error decrypting message:", error);
+        return {
+          ...message._doc,
+          message: "Error decrypting message",
+        };
+      }
+    });
+
+    console.log("decryptedMessages", decryptedMessages);
+
     // io.to(conversationId).emit("message", messages);
 
-    return res.status(200).json(messages);
+    return res.status(200).json(decryptedMessages);
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
   }
 };
+
 exports.deleteConversation = async (req, res) => {
   try {
     const { receiverId } = req.params;

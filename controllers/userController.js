@@ -330,7 +330,7 @@ exports.auth = async (req, res) => {
 
     if (!user.picture) {
       user.picture =
-        "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic";
+        "https://res.cloudinary.com/dcfy1isux/image/upload/v1719119008/placeholder-img.png";
     }
 
     await user.save();
