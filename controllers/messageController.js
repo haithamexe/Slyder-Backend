@@ -164,7 +164,6 @@ exports.getMessages = async (req, res) => {
     return res.status(500).json(err);
   }
 };
-
 exports.deleteConversation = async (req, res) => {
   try {
     const { receiverId } = req.params;
@@ -174,21 +173,30 @@ exports.deleteConversation = async (req, res) => {
         .status(400)
         .json({ message: "Receiver ID and User ID are required" });
     }
-    const conversationDeleted = await Conversation.findOneAndDelete({
+
+    const conversation = await Conversation.findOne({
       participants: { $all: [user._id, receiverId] },
     });
 
-    if (!conversationDeleted) {
+    if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    user.contacts.pull(receiverId);
-    await user.save();
+    // Delete all messages in the conversation
+    await Message.deleteMany({ conversation: conversation._id });
 
-    // await conversation.remove();
+    // Clear the messages array in the conversation
+    conversation.messages = [];
+    await conversation.save();
+
+    // Remove the receiver from the user's contacts
+
+    // Optionally, delete the conversation itself
+    // await Conversation.findByIdAndDelete(conversation._id);
+
     return res
       .status(200)
-      .json({ message: "Conversation deleted successfully" });
+      .json({ message: "Conversation and messages deleted successfully" });
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
