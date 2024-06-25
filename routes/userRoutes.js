@@ -23,6 +23,7 @@ const {
   unsuspendUser,
   getUserById,
   getUserContacts,
+  getUserSearched,
 } = require("../controllers/userController");
 
 router.post("/register", register);
@@ -52,5 +53,6 @@ router.put("/:userId/suspend", suspendUser);
 router.put("/:userId/unsuspend", unsuspendUser);
 router.get("/:userId", getUserById);
 router.get("/contacts/:userId", getUserContacts);
+router.get("/search/:query", getUserSearched);
 
 module.exports = router;

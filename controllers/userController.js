@@ -898,3 +898,29 @@ exports.getUserContacts = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+
+exports.getUserSearched = async (req, res) => {
+  try {
+    const { query } = req.params;
+    if (!query) {
+      return res.status(400).json({ message: "Please provide a query" });
+    }
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { firstName: { $regex: query, $options: "i" } },
+        { surName: { $regex: query, $options: "i" } },
+      ],
+    })
+      .select("username firstName surName picture")
+      .lean()
+      .exec();
+
+    if (!users) {
+      return res.status(404).json({ message: "No users found" });
+    }
+    return res.status(200).json(users);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
