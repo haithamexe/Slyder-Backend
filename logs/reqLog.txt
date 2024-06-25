@@ -2359,3 +2359,6 @@
 20240622	08:35:20	4aeb426b-3688-4c46-aa17-10bcda454847	GET	http://localhost:3000	//api/message/66762b3b70265817da898887
 20240624	09:56:44	3c508e63-a6f8-48f4-8210-9d3af5d8e733	GET	undefined	/api/message/create/65fd25541f2568bb067e5fe5
 20240624	09:56:45	a61b0306-c826-45d6-9bd2-3abaa379822e	GET	undefined	/favicon.ico
+20240625	11:18:27	0b4ee0b7-c180-4ac3-ace7-dc7523846652	GET	http://localhost:3000	/api/post/saved/[object%20Object]
+20240625	11:51:38	0277b447-31d5-4e1a-b9bc-76e7dd57f35a	GET	http://localhost:3000	/api/post/userLiked/6677a9c01f12d2db870810c1
+20240625	11:51:42	965e0140-7726-488d-8056-37c55eb42e32	GET	http://localhost:3000	/api/post/userLiked/6677a9c01f12d2db870810c1

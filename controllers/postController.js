@@ -38,6 +38,9 @@ exports.getPosts = async (req, res) => {
   try {
     const posts = await Post.find().lean().exec();
     return res.status(200).json(posts);
+    if (!posts) {
+      return res.status(404).json({ message: "Posts not found" });
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -93,6 +96,8 @@ exports.deletePost = async (req, res) => {
     if (post.image) {
       await cloudinary.uploader.destroy(post.image);
     }
+    await Like.deleteMany({ post: post._id }).exec();
+    await Comment.deleteMany({ post: post._id }).exec();
     await Post.findByIdAndDelete(post._id);
     return res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
@@ -161,7 +166,9 @@ exports.unlikePost = async (req, res) => {
     if (!currentLike) {
       return res.status(404).json({ message: "Like not found" });
     }
-    post.likes = post.likes.filter((like) => currentLike._id !== like._id);
+    post.likes = post.likes.filter(
+      (like) => like.toString() !== currentLike._id.toString()
+    );
     await post.save();
     res.status(201).json({ message: "Post unliked successfully" });
   } catch (error) {
@@ -264,9 +271,16 @@ exports.getPostLikes = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
     const likes = await Like.find({ post: post._id }).lean().exec();
-    const userHasLiked = likes.some(
-      (like) => like.user.toString() === user._id.toString()
-    );
+    let userHasLiked = false;
+    const userHasLikedQuery = await Like.findOne({
+      post: post._id,
+      user: user._id,
+    })
+      .lean()
+      .exec();
+    if (userHasLikedQuery) {
+      userHasLiked = true;
+    }
     res.status(200).json({ likes, userHasLiked });
   } catch (error) {
     console.error(error);
@@ -478,6 +492,30 @@ exports.getPostSavedByPostId = async (req, res) => {
       return res.status(200).json({ saved: false });
     }
     return res.status(200).json({ saved: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPostsLikedByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
+    const user = await User.findById(userId).lean().exec();
+    const likes = await Like.find({ user: user._id }).lean().exec();
+    if (!likes) {
+      return res.status(404).json({ message: "Likes not found" });
+    }
+    const posts = await Post.find({
+      _id: { $in: likes.map((like) => like.post) },
+    })
+      .lean()
+      .exec();
+
+    return res.status(200).json(posts);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
