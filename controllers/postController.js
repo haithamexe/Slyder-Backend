@@ -6,6 +6,8 @@ const Comment = require("../models/Comment");
 const Community = require("../models/Community");
 const Saved = require("../models/Saved");
 const cloudinary = require("../config/cloudinaryConfig");
+const Notification = require("../models/Notification");
+const { io } = require("../socket");
 
 exports.createPost = async (req, res) => {
   try {
@@ -134,9 +136,26 @@ exports.likePost = async (req, res) => {
       post: post._id,
       user: user._id,
     });
-    await like.save();
     post.likes.push(like._id);
-    await post.save();
+
+    if (post.user.toString() !== user._id.toString()) {
+      const notification = new Notification({
+        receiver: post.user,
+        sender: user._id,
+        type: "like",
+        post: post._id,
+      });
+      await notification.save();
+      io.to(post.user.toString()).emit("newNotification", notification);
+    }
+
+    // await like.save();
+    // await post.save();
+
+    await Promise.all([like.save(), post.save()]);
+
+    // io.to(post.user.toString()).emit("newNotification", notification);
+
     return res.status(201).json({ message: "Post liked successfully" });
   } catch (error) {
     console.error(error);
@@ -169,6 +188,12 @@ exports.unlikePost = async (req, res) => {
     post.likes = post.likes.filter(
       (like) => like.toString() !== currentLike._id.toString()
     );
+    // const notification = await Notification.findOneAndDelete({
+    //   receiver: post.user,
+    //   sender: user._id,
+    //   type: "like",
+    //   post: post._id,
+    // }).exec();
     await post.save();
     res.status(201).json({ message: "Post unliked successfully" });
   } catch (error) {
@@ -197,9 +222,21 @@ exports.commentPost = async (req, res) => {
       author: user._id,
       post: post._id,
     });
-    await newComment.save();
     post.comments.push(newComment._id);
-    await post.save();
+    // await newComment.save();
+    // await post.save();
+    await Promise.all([newComment.save(), post.save()]);
+
+    if (post.user.toString() !== user._id.toString()) {
+      const notification = new Notification({
+        receiver: post.user,
+        sender: user._id,
+        type: "comment",
+        post: post._id,
+      });
+      await notification.save();
+      io.to(post.user.toString()).emit("newNotification", notification);
+    }
     return res.status(201).json({ message: "Comment added successfully" });
   } catch (error) {
     console.error(error);
@@ -521,3 +558,18 @@ exports.getPostsLikedByUser = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+// exports.getPostsWithAlgorithm = async (req, res) => {
+//   try {
+//     const { userId, algo } = req.body;
+//     if (!userId) {
+//       return res.status(400).json({ message: "Please provide an id" });
+//     }
+//     const user = await User.findById(userId).lean().exec();
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     const sugPost = algo.sort((a, b) => b.number - a.number);
+
+//     tobePosts = sugPost.map

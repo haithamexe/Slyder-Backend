@@ -37,6 +37,7 @@ app.use("/api/user", require("./routes/userRoutes"));
 app.use("/api/post", require("./routes/postRoutes"));
 app.use("/api/message", require("./routes/messageRoutes"));
 app.use("/api/note", require("./routes/noteRoutes"));
+app.use("/api/notification", require("./routes/notificationRoutes"));
 // app.use("/api/notification", require("./routes/notificationRoutes"));
 // app.use("/api/room", require("./routes/roomRoutes"));
 

@@ -23,6 +23,16 @@ io.on("connection", (socket) => {
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 
+  socket.on("joinNotificationRoom", (userId) => {
+    socket.join(userId);
+    console.log(`User joined notification room ${userId}`);
+  });
+  socket.off("joinNotificationRoom", (userId) => {
+    // socket.join(userId);
+    socket.leave(userId);
+    console.log(`User quited notification room ${userId}`);
+  });
+
   socket.on("joinRoom", (conversationId) => {
     socket.join(conversationId);
     console.log(`User joined room ${conversationId}`);
