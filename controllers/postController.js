@@ -146,7 +146,23 @@ exports.likePost = async (req, res) => {
         post: post._id,
       });
       await notification.save();
-      io.to(post.user.toString()).emit("newNotification", notification);
+      const socketNotification = {
+        _id: notification._id,
+        sender: {
+          _id: user._id,
+          username: user.username,
+          firstName: user.firstName,
+          surName: user.surName,
+        },
+        post: {
+          _id: post._id,
+          image: post.image,
+        },
+        type: "like",
+        createdAt: notification.createdAt,
+      };
+
+      io.to(post.user.toString()).emit("newNotification", socketNotification);
     }
 
     // await like.save();
@@ -235,7 +251,23 @@ exports.commentPost = async (req, res) => {
         post: post._id,
       });
       await notification.save();
-      io.to(post.user.toString()).emit("newNotification", notification);
+
+      const socketNotification = {
+        _id: notification._id,
+        sender: {
+          _id: user._id,
+          username: user.username,
+          firstName: user.firstName,
+          surName: user.surName,
+        },
+        post: {
+          _id: post._id,
+          image: post.image,
+        },
+        type: "comment",
+        createdAt: notification.createdAt,
+      };
+      io.to(post.user.toString()).emit("newNotification", socketNotification);
     }
     return res.status(201).json({ message: "Comment added successfully" });
   } catch (error) {
