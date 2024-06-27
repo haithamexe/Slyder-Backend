@@ -15,14 +15,11 @@ const userSocketMap = {};
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   if (userId != "undefined") userSocketMap[userId] = socket.id;
-
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
-
   socket.on("disconnect", () => {
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
-
   socket.on("joinNotificationRoom", (userId) => {
     socket.join(userId);
     console.log(`User joined notification room ${userId}`);
@@ -32,12 +29,10 @@ io.on("connection", (socket) => {
     socket.leave(userId);
     console.log(`User quited notification room ${userId}`);
   });
-
   socket.on("joinRoom", (conversationId) => {
     socket.join(conversationId);
     console.log(`User joined room ${conversationId}`);
   });
-
   socket.on("leaveRoom", (conversationId) => {
     socket.leave(conversationId);
     console.log(`User left room ${conversationId}`);

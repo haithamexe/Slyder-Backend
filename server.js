@@ -24,8 +24,8 @@ const PORT = process.env.PORT || 8000;
 
 dbConnect();
 // const app = express();
-app.use(cors(corsOptions));
 app.use(cookieParser());
+app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(express.json());

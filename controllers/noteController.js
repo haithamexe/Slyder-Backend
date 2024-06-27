@@ -26,14 +26,7 @@ exports.createNote = async (req, res) => {
 
 exports.getNotes = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const user = await User.findById(userId).exec();
-
-    if (!user) {
-      return res
-        .status(401)
-        .json({ message: "You are not authorized to access this route" });
-    }
+    const user = req.user;
     const notes = await Note.find({ user: user._id }).exec();
     if (!notes) {
       return res.status(404).json({ message: "No notes found" });

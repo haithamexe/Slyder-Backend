@@ -265,3 +265,5 @@
 20240520	18:10:17	a74efb28-2f8d-4c7c-bf43-c21718487ca1	PayloadTooLargeError: request entity too large
 20240520	18:10:40	9d81eec2-8eb8-4126-a6a7-1d42b707e902	PayloadTooLargeError: request entity too large
 20240623	07:33:25	d1468ab5-9453-46a9-bec1-2e4a6433e6c5	BadRequestError: request aborted
+20240627	02:40:52	ca5160a3-d7cd-405d-b5ad-97a25e00e171	BadRequestError: request aborted
+20240627	02:41:05	59bab18d-c350-475a-8fc7-1b7d0d4c0b10	BadRequestError: request aborted

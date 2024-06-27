@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { protectNoteRoute } = require("../middleware/protectRoute");
+const protectRoute = require("../middleware/protectRoute");
 
 const {
   createNote,
@@ -8,7 +8,7 @@ const {
 } = require("../controllers/noteController");
 
 router.delete("/:noteId", deleteNote);
-router.get("/:userId", getNotes);
-router.post("/create", protectNoteRoute, createNote);
+router.get("/", protectRoute, getNotes);
+router.post("/create", protectRoute, createNote);
 
 module.exports = router;

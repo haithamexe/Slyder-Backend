@@ -6,6 +6,8 @@ const Post = require("../models/Post");
 const Saved = require("../models/Saved");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
+const Notification = require("../models/Notification");
+const { io } = require("../socket");
 const { sendEmail } = require("../helpers/mailer");
 const {
   registerValidation,
@@ -115,36 +117,52 @@ exports.activateAccount = async (req, res) => {
       }
     );
 
+    // res.cookie("refreshToken", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/user/",
+    // });
+
+    // res.cookie("refreshTokenMessage", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/message/",
+    // });
+
+    // res.cookie("refreshTokenNotes", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/note/",
+    // });
+
+    // res.cookie("refreshTokenPost", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/post/",
+    // });
+
+    // res.cookie("refreshTokenNotifications", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/notification/",
+    // });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "none",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/user/",
-    });
-
-    res.cookie("refreshTokenMessage", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/message/",
-    });
-
-    res.cookie("refreshTokenNotes", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/note/",
-    });
-
-    res.cookie("refreshTokenPost", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/post/",
+      path: "/api/",
     });
 
     const accessToken = jwt.sign(
@@ -220,36 +238,52 @@ exports.login = async (req, res) => {
       }
     );
 
+    // res.cookie("refreshToken", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/user/",
+    // });
+
+    // res.cookie("refreshTokenMessage", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/message/",
+    // });
+
+    // res.cookie("refreshTokenNote", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/note/",
+    // });
+
+    // res.cookie("refreshTokenPost", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/post/",
+    // });
+
+    // res.cookie("refreshTokenNotifications", refreshToken, {
+    //   httpOnly: true,
+    //   sameSite: "none",
+    //   secure: true,
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,
+    //   path: "/api/notification/",
+    // });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: "strict",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/user/",
-    });
-
-    res.cookie("refreshTokenMessage", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/message/",
-    });
-
-    res.cookie("refreshTokenNote", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/note/",
-    });
-
-    res.cookie("refreshTokenPost", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/post/",
+      // path: "/api",
     });
 
     const accessToken = jwt.sign(
@@ -315,7 +349,8 @@ exports.auth = async (req, res) => {
     );
 
     if (refreshDecoded.id !== accessDecoded.id) {
-      res.clearCookie("refreshToken", { path: "/api/user/" });
+      // res.clearCookie("refreshToken", { path: "/api/user/" });
+      res.clearCookie("refreshToken");
       return res
         .status(401)
         .json({ message: "Unauthorized user doesnt match" });
@@ -361,10 +396,11 @@ exports.auth = async (req, res) => {
 
 exports.logout = async (req, res) => {
   try {
-    res.clearCookie("refreshToken", { path: "/api/user/" });
-    res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
-    res.clearCookie("refreshTokenNote", { path: "/api/note/" });
-    res.clearCookie("refreshTokenPost", { path: "/api/post/" });
+    // res.clearCookie("refreshToken", { path: "/api/user/" });
+    // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
+    // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
+    // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
+    res.clearCookie("refreshToken");
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -733,9 +769,28 @@ exports.followUser = async (req, res) => {
 
     user.contacts.push(followId);
     followUser.contacts.push(userId);
+    const notification = new Notification({
+      receiver: followUser._id,
+      sender: user._id,
+      type: "follow",
+    });
+    await Promise.all([user.save(), followUser.save(), notification.save()]);
+    const socketNotification = {
+      _id: notification._id,
+      sender: {
+        _id: user._id,
+        username: user.username,
+        picture: user.picture,
+        firstName: user.firstName,
+        surName: user.surName,
+      },
+      type: "follow",
+      createdAt: notification.createdAt,
+    };
 
-    await user.save();
-    await followUser.save();
+    io.to(followId.toString()).emit("newNotification", socketNotification);
+    // await user.save();
+    // await followUser.save();
     return res.status(200).json({ message: "User followed" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
