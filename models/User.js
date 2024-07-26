@@ -72,11 +72,13 @@ const userSchema = mongoose.Schema(
       default: false,
     },
     following: {
-      type: Array,
+      type: [ObjectId],
+      ref: "User",
       default: [],
     },
     followers: {
-      type: Array,
+      type: [ObjectId],
+      ref: "User",
       default: [],
     },
     contacts: {
@@ -97,7 +99,7 @@ const userSchema = mongoose.Schema(
     },
     posts: [
       {
-        type: ObjectId,
+        type: Array,
         ref: "Post",
       },
     ],

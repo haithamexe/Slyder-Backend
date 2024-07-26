@@ -21,18 +21,20 @@ const postSchema = mongoose.Schema(
       type: ObjectId,
       ref: "Community",
     },
-    comments: [
-      {
-        type: ObjectId,
-        ref: "Comment",
-      },
-    ],
-    likes: [
-      {
-        type: ObjectId,
-        ref: "Like",
-      },
-    ],
+    comments: {
+      type: [ObjectId],
+      ref: "Comment",
+    },
+    savedBy: {
+      type: [ObjectId],
+      ref: "Saved",
+    },
+
+    likes: {
+      type: [ObjectId],
+      ref: "Like",
+    },
+
     shares: {
       type: Number,
       default: 0,

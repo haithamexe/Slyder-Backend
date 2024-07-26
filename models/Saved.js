@@ -7,12 +7,10 @@ const savedSchema = mongoose.Schema(
       type: ObjectId,
       ref: "User",
     },
-    posts: [
-      {
-        type: ObjectId,
-        ref: "Post",
-      },
-    ],
+    posts: {
+      type: [ObjectId],
+      ref: "Post",
+    },
   },
   { timestamps: true }
 );

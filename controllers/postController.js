@@ -49,13 +49,32 @@ exports.getPosts = async (req, res) => {
   }
 };
 
-exports.getPostById = async (req, res) => {
+exports.getPost = async (req, res) => {
   try {
     const { postId } = req.params;
     if (!postId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const post = await Post.findById(postId).exec();
+    const post = await Post.findById(postId)
+      .populate([
+        {
+          path: "user",
+          select: "username firstName surName picture",
+        },
+        {
+          path: "likes",
+          select: "user",
+        },
+        {
+          path: "comments",
+          select: "content author",
+        },
+        {
+          path: "savedBy",
+          select: "user",
+        },
+      ])
+      .exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
@@ -110,22 +129,19 @@ exports.deletePost = async (req, res) => {
 
 exports.likePost = async (req, res) => {
   try {
-    const { userId } = req.body;
+    // const { userId } = req.body;
     const { postId } = req.params;
-    if (!userId || !postId) {
+    if (!postId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
     const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    const user = await User.findById(userId).exec();
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const user = req.user;
     const existingLike = await Like.findOne({
       post: postId,
-      user: userId,
+      user: user._id,
     }).exec();
     if (existingLike) {
       return res
@@ -181,19 +197,15 @@ exports.likePost = async (req, res) => {
 
 exports.unlikePost = async (req, res) => {
   try {
-    const { userId } = req.body;
     const { postId } = req.params;
-    if (!userId || !postId) {
+    if (!postId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
     const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    const user = await User.findById(userId).exec();
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const user = req.user;
     const currentLike = await Like.findOneAndDelete({
       post: post._id,
       user: user._id,
@@ -437,7 +449,7 @@ exports.savePost = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const post = await Post.findById(postId).lean().exec();
+    const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
@@ -448,7 +460,8 @@ exports.savePost = async (req, res) => {
       });
     }
     saved.posts.push(post._id);
-    await saved.save();
+    post.savedBy.push(saved._id);
+    await Promise.all([saved.save(), post.save()]);
     return res.status(200).json({ message: "Post saved successfully" });
   } catch (error) {
     console.error(error);
@@ -466,7 +479,7 @@ exports.unsavePost = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const post = await Post.findById(postId).lean().exec();
+    const post = await Post.findById(postId).exec();
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
@@ -477,7 +490,12 @@ exports.unsavePost = async (req, res) => {
     saved.posts = saved.posts.filter(
       (post) => post.toString() !== postId.toString()
     );
-    await saved.save();
+
+    post.savedBy = post.savedBy.filter(
+      (savedBy) => savedBy.toString() !== saved._id.toString()
+    );
+
+    await Promise.all([saved.save(), post.save()]);
     return res.status(200).json({ message: "Post unsaved successfully" });
   } catch (error) {
     console.error(error);
@@ -588,6 +606,25 @@ exports.getPostsLikedByUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPosts = async (req, res) => {
+  try {
+    const user = req.user;
+    const followingPosts = await Post.find({ user: { $in: user.following } })
+      .lean()
+      .exec();
+    const userPosts = await Post.find({ user: user._id }).lean().exec();
+    const posts = [...followingPosts, ...userPosts];
+    posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const sendPostsIds = posts.map((post) => post._id);
+    return res.status(200).json(sendPostsIds);
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Server error while getting home posts" });
   }
 };
 

@@ -41,7 +41,7 @@ exports.getNotifications = async (req, res) => {
     if (!notifications) {
       return res.status(404).json({ message: "No notifications found" });
     }
-    console.log(notifications);
+    // console.log(notifications);
     res.status(200).json(notifications);
   } catch (error) {
     console.log(error);

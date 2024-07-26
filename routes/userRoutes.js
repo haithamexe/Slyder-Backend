@@ -26,6 +26,8 @@ const {
   getUserSearched,
 } = require("../controllers/userController");
 
+const protectRoute = require("../middleware/protectRoute");
+
 router.post("/register", register);
 router.post("/activate", activateAccount);
 router.post("/login", login);
@@ -35,12 +37,12 @@ router.post("/auth", auth);
 router.post("/refreshActivation", refreshActivationToken);
 router.delete("/delete", deleteUser);
 router.put("/update/:id", updateUser);
-router.get("/", getUsers);
+// router.get("/", getUsers);
 router.get("/username/:username", getUserByUsername);
-// router.put("/:userId/follow", followUser);
-// router.put("/:userId/unfollow", unfollowUser);
-// router.get("/:userId/followers", getFollowers);
-// router.get("/:userId/following", getFollowing);
+router.put("/:userId/follow", protectRoute, followUser);
+router.put("/:userId/unfollow", protectRoute, unfollowUser);
+router.get("/:userId/followers", getFollowers);
+router.get("/:userId/following", getFollowing);
 router.get("/followers/:userId", getFollowers);
 router.get("/following/:userId", getFollowing);
 router.put("/follow/:userId", followUser);
@@ -51,7 +53,7 @@ router.put("/updateEmail", updateUserEmail);
 router.put("/updatePassword", updateUserPassword);
 router.put("/:userId/suspend", suspendUser);
 router.put("/:userId/unsuspend", unsuspendUser);
-router.get("/:userId", getUserById);
+// router.get("/get/:userId", getUserById);
 router.get("/contacts/:userId", getUserContacts);
 router.get("/search/:query", getUserSearched);
 

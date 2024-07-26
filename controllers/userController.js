@@ -200,7 +200,7 @@ exports.login = async (req, res) => {
       return res.status(404).json({ message: "Invalid email" });
     }
 
-    const user = await User.findOne({ email: email }); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
+    const user = await User.findOne({ email }); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
     if (!user) {
       return res.status(404).json({ message: "Invalid Email or Password" });
     }
@@ -280,10 +280,10 @@ exports.login = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "none",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
-      // path: "/api",
+      path: "/api",
     });
 
     const accessToken = jwt.sign(
@@ -313,11 +313,11 @@ exports.refresh = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) {
-      res.clearCookie("refreshToken", { path: "/api/user/" });
+      res.clearCookie("refreshToken", { path: "/api" });
       return res.status(401).json({ message: "Unauthorized User" });
     }
     const accessToken = jwt.sign(
-      { id: user._id.toString() },
+      { id: user._id },
       process.env.JWT_ACCESS_SECRET,
       {
         expiresIn: "15m",
@@ -343,6 +343,7 @@ exports.auth = async (req, res) => {
       refreshToken,
       process.env.JWT_REFRESH_SECRET
     );
+
     const accessDecoded = jwt.verify(
       accessToken,
       process.env.JWT_ACCESS_SECRET
@@ -350,7 +351,7 @@ exports.auth = async (req, res) => {
 
     if (refreshDecoded.id !== accessDecoded.id) {
       // res.clearCookie("refreshToken", { path: "/api/user/" });
-      res.clearCookie("refreshToken");
+      res.clearCookie("refreshToken", { path: "/api" });
       return res
         .status(401)
         .json({ message: "Unauthorized user doesnt match" });
@@ -358,18 +359,11 @@ exports.auth = async (req, res) => {
 
     const user = await User.findById(accessDecoded.id).exec();
     if (!user) {
-      res.clearCookie("refreshToken", { path: "/api/user/" });
+      res.clearCookie("refreshToken", { path: "/api" });
       return res.status(404).json({ message: "Unauthorized User" });
     }
 
     console.log("Authed: ", refreshDecoded.id, accessDecoded.id);
-
-    if (!user.picture) {
-      user.picture =
-        "https://res.cloudinary.com/dcfy1isux/image/upload/v1719119008/placeholder-img.png";
-    }
-
-    await user.save();
 
     const data = {
       id: user._id,
@@ -400,7 +394,7 @@ exports.logout = async (req, res) => {
     // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
     // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
     // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
-    res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", { path: "/api" });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -569,30 +563,39 @@ exports.updateUser = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
+    // const { userId } = req.params;
+    // if (!userId) {
+    //   return res.status(400).json({ message: "Please provide an id" });
+    // }
+    // const user = await User.findById(userId).lean().exec();
+    // if (!user) {
+    //   return res.status(404).json({ message: "User not found" });
+    // }
+
+    // const userdata = {
+    //   id: user._id,
+    //   username: user.username,
+    //   firstName: user.firstName,
+    //   surName: user.surName,
+    //   picture: user.picture,
+    //   cover: user.cover,
+    //   bio: user?.details?.bio,
+    //   skills: user?.details?.skills,
+    //   website: user?.details?.website,
+    // };
+    // return res.status(200).json(userdata);
+
     const { userId } = req.params;
     if (!userId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const user = await User.findById(userId).lean().exec();
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    if (!user.picture) {
-      user.picture =
-        "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic";
-    }
-    const userdata = {
-      id: user._id,
-      username: user.username,
-      firstName: user.firstName,
-      surName: user.surName,
-      picture: user.picture,
-      cover: user.cover,
-      bio: user?.details?.bio,
-      skills: user?.details?.skills,
-      website: user?.details?.website,
-    };
-    return res.status(200).json(userdata);
+    const post = await Post.findById(userId)
+      .populate("user", "username firstName surName picture cover")
+      .lean()
+      .exec();
+    return res.status(200).json({
+      user: post,
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -608,7 +611,20 @@ exports.getUserByUsername = async (req, res) => {
       return res.status(400).json({ message: "Please provide a username" });
     }
 
-    const user = await User.findOne({ username }).lean().exec();
+    const user = await User.findOne({ username })
+      .select("-password -email -contacts -notifications")
+      .populate([
+        {
+          path: "followers",
+          select: "username firstName surName picture",
+        },
+        {
+          path: "following",
+          select: "username firstName surName picture",
+        },
+      ])
+      .lean()
+      .exec();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -630,8 +646,8 @@ exports.getUserByUsername = async (req, res) => {
       bio: user?.details?.bio,
       skills: user?.details?.skills,
       website: user?.details?.website,
-      followersNum: user.followers.length,
-      followingNum: user.following.length,
+      followers: user?.followers,
+      following: user?.following,
     };
 
     return res.status(200).json(userdata);
@@ -761,6 +777,8 @@ exports.followUser = async (req, res) => {
     }
     user.following.push(followId);
     followUser.followers.push(userId);
+    console.log(followUser.username, followId, "followed");
+    console.log(user.username, userId, "user");
 
     // user.notifications.push({
     //   type: "follow",
@@ -769,6 +787,7 @@ exports.followUser = async (req, res) => {
 
     user.contacts.push(followId);
     followUser.contacts.push(userId);
+
     const notification = new Notification({
       receiver: followUser._id,
       sender: user._id,
@@ -813,30 +832,16 @@ exports.unfollowUser = async (req, res) => {
     if (!user.following.includes(unFollowId)) {
       return res.status(409).json({ message: "User already unfollowed" });
     }
-    user.following = user.following.filter((id) => id !== unFollowId);
-    unFollowUser.followers = unFollowUser.followers.filter(
-      (id) => id !== userId
+    user.following = user.following.filter(
+      (user) => user.toString() !== unFollowId
     );
-    await user.save();
-    await unFollowUser.save();
+    unFollowUser.followers = unFollowUser.followers.filter(
+      (user) => user.toString() !== userId
+    );
+    console.log(unFollowUser.username, unFollowId, "unfollowed");
+    console.log(user.username, userId, "user");
+    await Promise.all([user.save(), unFollowUser.save()]);
     return res.status(200).json({ message: "User unfollowed" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-exports.getFollowers = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    if (!userId) {
-      return res.status(400).json({ message: "Please provide an id" });
-    }
-    const user = await User.findById(userId).lean().exec(); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    const followers = user.followers;
-    return res.status(200).json(followers);
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -848,14 +853,42 @@ exports.getFollowing = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
-    const user = await User.findById(userId).lean().exec(); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
+    const user = await User.findById(userId)
+      .select("following")
+      .populate({
+        path: "following",
+        select: "username firstName surName picture",
+      })
+      .lean()
+      .exec(); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const following = user.following;
-    console.log("/////////////////////////////asd");
-    console.log(following);
-    return res.status(200).json(following);
+    console.log(user.following);
+    return res.status(200).json(user.following);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getFollowers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: "Please provide an id" });
+    }
+    const user = await User.findById(userId)
+      .select("followers")
+      .populate({
+        path: "followers",
+        select: "username firstName surName picture",
+      })
+      .lean()
+      .exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json(user.followers);
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
