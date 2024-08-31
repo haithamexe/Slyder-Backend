@@ -29,6 +29,14 @@ io.on("connection", (socket) => {
     socket.leave(userId);
     console.log(`User quited notification room ${userId}`);
   });
+  socket.on("joinConversationRoom", (conversationId) => {
+    socket.join(conversationId);
+    console.log(`User joined room ${conversationId}`);
+  });
+  socket.on("leaveConversationRoom", (conversationId) => {
+    socket.leave(conversationId);
+    console.log(`User left room ${conversationId}`);
+  });
   socket.on("joinRoom", (conversationId) => {
     socket.join(conversationId);
     console.log(`User joined room ${conversationId}`);

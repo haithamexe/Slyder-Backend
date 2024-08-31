@@ -42,7 +42,7 @@ const userSchema = mongoose.Schema(
     picture: {
       type: String,
       default:
-        "https://res.cloudinary.com/dcfy1isux/image/upload/f_auto,q_auto/placeholder-pic",
+        "https://res.cloudinary.com/dcfy1isux/image/upload/v1719119008/placeholder-img.png",
     },
     cover: {
       type: String,

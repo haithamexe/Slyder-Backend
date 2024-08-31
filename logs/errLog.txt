@@ -267,3 +267,11 @@
 20240623	07:33:25	d1468ab5-9453-46a9-bec1-2e4a6433e6c5	BadRequestError: request aborted
 20240627	02:40:52	ca5160a3-d7cd-405d-b5ad-97a25e00e171	BadRequestError: request aborted
 20240627	02:41:05	59bab18d-c350-475a-8fc7-1b7d0d4c0b10	BadRequestError: request aborted
+20240728	04:33:39	3dbfed22-7190-444a-8936-38c82daa6de6	Error: cors not working properly
+20240728	04:33:39	73fc19bb-1eba-4e95-b2f5-21dcc7be8933	Error: cors not working properly
+20240728	04:33:39	92b27f03-c184-48cc-a7e3-ae954ad3b4f4	Error: cors not working properly
+20240728	04:33:39	a53ab07c-b688-424c-a6b6-da315c8a93bd	Error: cors not working properly
+20240728	04:34:23	2385a4fc-8a24-4944-b297-584217bbfa37	Error: cors not working properly
+20240728	04:34:23	9671931f-cf37-4a2a-b69f-c2e9eb2aa5e4	Error: cors not working properly
+20240728	04:34:23	6038e588-7057-4e2a-a7a1-ec22f85f7db3	Error: cors not working properly
+20240728	04:34:23	f7479c3c-8c6f-4687-b212-c56344d4371c	Error: cors not working properly

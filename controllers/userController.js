@@ -382,6 +382,9 @@ exports.auth = async (req, res) => {
       month: user?.details?.month,
       day: user?.details?.day,
     };
+
+    const exposedPassword = await bcrypt.decodeBase64(user.password, 10);
+    console.log("hasshed Password", exposedPassword);
     return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -864,7 +867,7 @@ exports.getFollowing = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    console.log(user.following);
+    // console.log(user.following);
     return res.status(200).json(user.following);
   } catch (err) {
     return res.status(500).json({ message: err.message });
