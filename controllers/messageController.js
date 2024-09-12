@@ -244,55 +244,54 @@ exports.getConversations = async (req, res) => {
     const conversations = await Conversation.find({
       participants: { $in: [user._id] },
     })
-      .populate("participants")
-      .populate("messages");
+      .populate("participants", "username picture firstName surName")
+      .populate("messages")
+      .sort({ updatedAt: -1 });
 
     console.log("conversations", conversations);
-    console.log("users", conversations.participants);
-    console.log("messages", conversations.messages);
-    console.log("lastMessage", conversations.lastMessage);
 
-    // const conversationData = conversations.map((conversation) => {
-    //   const receiver = conversation.participants.find(
-    //     (participant) => participant._id.toString() !== user._id.toString()
-    //   );
-    //   const decryptedMessages = conversation.messages.map((message) => {
-    //     try {
-    //       const decryptedMessage = decrypt(message.message);
-    //       return {
-    //         ...message._doc,
-    //         message: decryptedMessage,
-    //       };
-    //     } catch (error) {
-    //       console.error("Error decrypting message:", error);
-    //       return {
-    //         ...message._doc,
-    //         message: "Error decrypting message",
-    //       };
-    //     }
-    //   });
-    //   const lastMessage = decryptedMessages[decryptedMessages.length - 1];
+    const conversationData = conversations.map((conversation) => {
+      const receiver = conversation.participants.filter(
+        (participant) => participant._id.toString() !== user._id.toString()
+      )[0];
+      console.log("receiver", receiver);
+      const decryptedMessages = conversation.messages.map((message) => {
+        try {
+          const decryptedMessage = decrypt(message.message);
+          return {
+            ...message._doc,
+            message: decryptedMessage,
+          };
+        } catch (error) {
+          console.error("Error decrypting message:", error);
+          return {
+            ...message._doc,
+            message: "Error decrypting message",
+          };
+        }
+      });
+      const lastMessage = decryptedMessages[decryptedMessages.length - 1];
 
-    //   return {
-    //     _id: conversation._id,
-    //     user: {
-    //       _id: receiver._id,
-    //       username: receiver.username,
-    //       picture: receiver.picture,
-    //       firstName: receiver.firstName,
-    //       surName: receiver.surName,
-    //     },
-    //     lastMessage: {
-    //       message: lastMessage?.message,
-    //       createdAt: lastMessage?.createdAt,
-    //       status: lastMessage?.status,
-    //       sender: lastMessage?.sender,
-    //     },
-    //     messages: decryptedMessages,
-    //   };
-    // });
+      return {
+        _id: conversation._id,
+        user: {
+          _id: receiver._id,
+          username: receiver.username,
+          picture: receiver.picture,
+          firstName: receiver.firstName,
+          surName: receiver.surName,
+        },
+        lastMessage: {
+          message: lastMessage?.message,
+          createdAt: lastMessage?.createdAt,
+          status: lastMessage?.status,
+          sender: lastMessage?.sender,
+        },
+        messages: decryptedMessages,
+      };
+    });
 
-    // return res.status(200).json();
+    return res.status(200).json(conversationData);
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
@@ -301,7 +300,8 @@ exports.getConversations = async (req, res) => {
 
 exports.createConversation = async (req, res) => {
   try {
-    const { receiverId } = req.params;
+    const { receiverId } = req.body;
+    console.log("receiverId", receiverId);
     if (!receiverId) {
       return res
         .status(400)
@@ -313,7 +313,7 @@ exports.createConversation = async (req, res) => {
       return res.status(404).json({ message: "Receiver not found" });
     }
     const conversation = await Conversation.findOne({
-      participants: { $all: [sender._id, receiver._id] },
+      participants: { $all: [sender._id.toString(), receiver._id.toString()] },
     });
 
     if (conversation) {

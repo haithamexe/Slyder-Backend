@@ -17,7 +17,7 @@ router.post("/create/:receiverId", protectRoute, createMessage);
 router.delete("/conversation/:receiverId", protectRoute, deleteConversation);
 router.get("/conversations", protectRoute, getConversations);
 router.get("/:receiverId", protectRoute, getMessages);
-router.post("/conversation/:receiverId", createConversation);
+router.post("/conversation", protectRoute, createConversation);
 // router.get("/conversation/:receiverId", protectRoute, getConversation);
 // router.put("/:messageId", protectMessageRoute, updateMessageStatus);
 // router.delete("/:messageId", deleteMessage);

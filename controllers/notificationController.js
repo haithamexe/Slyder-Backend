@@ -1,5 +1,6 @@
 const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
+const { io } = require("../socket");
 
 const User = mongoose.model("User");
 exports.createNotification = async (req, res) => {
@@ -103,7 +104,7 @@ exports.markAsRead = async (req, res) => {
     if (!notifications) {
       return res.status(404).json({ message: "No unread notifications found" });
     }
-    io.to(user._id).emit("clearNotifications");
+    // io.to(user._id).emit("clearNotifications");
     res.status(200).json({ message: "Notifications marked as read" });
   } catch (error) {
     console.log(error);
