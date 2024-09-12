@@ -13,7 +13,7 @@ const {
   getConversations,
 } = require("../controllers/messageController");
 
-router.post("/create/:receiverId", protectRoute, createMessage);
+router.post("/create", protectRoute, createMessage);
 router.delete("/conversation/:receiverId", protectRoute, deleteConversation);
 router.get("/conversations", protectRoute, getConversations);
 router.get("/:receiverId", protectRoute, getMessages);

@@ -8,7 +8,7 @@ const { encrypt, decrypt } = require("../utility/cryptoUtil");
 
 exports.createMessage = async (req, res) => {
   try {
-    const { receiverId } = req.params;
+    const { receiverId, message } = req.body;
     const user = req.user;
     if (!receiverId || !user) {
       return res
@@ -27,13 +27,13 @@ exports.createMessage = async (req, res) => {
       await conversation.save();
     }
 
-    const encryptedMessage = encrypt(req.body.message);
+    // const encryptedMessage = encrypt(message);
 
     const newMessage = new Message({
       conversation: conversation._id,
       sender: sender._id,
       receiver: receiver._id,
-      message: encryptedMessage,
+      message: message,
       status: "sent",
     });
     conversation.messages.push(newMessage._id);
@@ -41,9 +41,12 @@ exports.createMessage = async (req, res) => {
     await Promise.all([newMessage.save(), conversation.save()]);
 
     // Emit the new message to the conversation room
-    // io.to(conversation._id.toString()).emit("newMessage", newMessage);
+    io.to(receiver._id.toString()).emit("newMessage", {
+      message: newMessage,
+      conversationId: conversation._id,
+    });
 
-    return res.status(200).json(newMessage);
+    return res.status(200).json({ message: newMessage });
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
@@ -245,7 +248,11 @@ exports.getConversations = async (req, res) => {
       participants: { $in: [user._id] },
     })
       .populate("participants", "username picture firstName surName")
-      .populate("messages")
+      .populate({
+        path: "messages",
+        options: { sort: { createdAt: -1 } },
+      })
+      .populate("lastMessage")
       .sort({ updatedAt: -1 });
 
     console.log("conversations", conversations);
@@ -255,25 +262,25 @@ exports.getConversations = async (req, res) => {
         (participant) => participant._id.toString() !== user._id.toString()
       )[0];
       console.log("receiver", receiver);
-      const decryptedMessages = conversation.messages.map((message) => {
-        try {
-          const decryptedMessage = decrypt(message.message);
-          return {
-            ...message._doc,
-            message: decryptedMessage,
-          };
-        } catch (error) {
-          console.error("Error decrypting message:", error);
-          return {
-            ...message._doc,
-            message: "Error decrypting message",
-          };
-        }
-      });
-      const lastMessage = decryptedMessages[decryptedMessages.length - 1];
+      // const decryptedMessages = conversation.messages.map((message) => {
+      //   try {
+      //     const decryptedMessage = decrypt(message.message);
+      //     return {
+      //       ...message._doc,
+      //       message: decryptedMessage,
+      //     };
+      //   } catch (error) {
+      //     console.error("Error decrypting message:", error);
+      //     return {
+      //       ...message._doc,
+      //       message: "Error decrypting message",
+      //     };
+      //   }
+      // });
+      // const lastMessage = decryptedMessages[decryptedMessages.length - 1];
 
       return {
-        _id: conversation._id,
+        ...conversation._doc,
         user: {
           _id: receiver._id,
           username: receiver.username,
@@ -281,13 +288,6 @@ exports.getConversations = async (req, res) => {
           firstName: receiver.firstName,
           surName: receiver.surName,
         },
-        lastMessage: {
-          message: lastMessage?.message,
-          createdAt: lastMessage?.createdAt,
-          status: lastMessage?.status,
-          sender: lastMessage?.sender,
-        },
-        messages: decryptedMessages,
       };
     });
 

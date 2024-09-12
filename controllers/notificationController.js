@@ -70,6 +70,24 @@ exports.getMessagesNotifications = async (req, res) => {
   }
 };
 
+exports.markAsRead = async (req, res) => {
+  try {
+    const user = req.user;
+    const notifications = await Notification.updateMany(
+      { receiver: user._id, read: false },
+      { read: true }
+    ).exec();
+    if (!notifications) {
+      return res.status(404).json({ message: "No unread notifications found" });
+    }
+    // io.to(user._id).emit("clearNotifications");
+    res.status(200).json({ message: "Notifications marked as read" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // exports.getPostNotifications = async (req, res) => {
 //   try {
 //     const { userId } = req.params;
@@ -93,21 +111,3 @@ exports.getMessagesNotifications = async (req, res) => {
 //     res.status(500).json({ message: "Internal server error" });
 //   }
 // };
-
-exports.markAsRead = async (req, res) => {
-  try {
-    const user = req.user;
-    const notifications = await Notification.updateMany(
-      { receiver: user._id, read: false },
-      { read: true }
-    ).exec();
-    if (!notifications) {
-      return res.status(404).json({ message: "No unread notifications found" });
-    }
-    // io.to(user._id).emit("clearNotifications");
-    res.status(200).json({ message: "Notifications marked as read" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
