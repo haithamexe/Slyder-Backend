@@ -308,6 +308,12 @@ exports.createConversation = async (req, res) => {
         .json({ message: "Receiver ID and User ID are required" });
     }
     const sender = req.user;
+
+    if (sender._id.toString() === receiverId) {
+      return res
+        .status(400)
+        .json({ message: "You cannot create a conversation with yourself" });
+    }
     const receiver = await User.findById(receiverId);
     if (!receiver) {
       return res.status(404).json({ message: "Receiver not found" });
@@ -316,45 +322,52 @@ exports.createConversation = async (req, res) => {
       participants: { $all: [sender._id.toString(), receiver._id.toString()] },
     });
 
-    if (conversation) {
-      const messages = await Message.find({
-        conversation: conversation._id,
-      });
-      const decryptedMessages = messages.map((msg) => {
-        const decryptedMessage = decrypt(msg.message);
-        return {
-          ...msg._doc,
-          message: decryptedMessage,
-        };
-      });
-      const lastMessage = decryptedMessages[decryptedMessages.length - 1];
-      const currentConversation = {
-        _id: conversation._id,
-        user: {
-          _id: receiver._id,
-          username: receiver.username,
-          picture: receiver.picture,
-          firstName: receiver.firstName,
-          surName: receiver.surName,
-        },
-        lastMessage: {
-          message: lastMessage.message,
-          createdAt: lastMessage.createdAt,
-          status: lastMessage.status,
-          sender: lastMessage.sender,
-        },
-        messages: decryptedMessages,
-      };
-      return res.status(200).json(currentConversation);
-    }
+    // check if conversation already exists
+
+    // if (conversation) {
+    //   const messages = await Message.find({
+    //     conversation: conversation._id,
+    //   });
+    //   const decryptedMessages = messages.map((msg) => {
+    //     const decryptedMessage = decrypt(msg.message);
+    //     return {
+    //       ...msg._doc,
+    //       message: decryptedMessage,
+    //     };
+    //   });
+    //   const lastMessage = decryptedMessages[decryptedMessages.length - 1];
+    //   const currentConversation = {
+    //     ...conversation._doc,
+    //     user: {
+    //       _id: receiver._id,
+    //       username: receiver.username,
+    //       picture: receiver.picture,
+    //       firstName: receiver.firstName,
+    //       surName: receiver.surName,
+    //     },
+    //   };
+    //   return res.status(200).json(currentConversation);
+    // }
 
     const newConversation = new Conversation({
       participants: [sender._id, receiver._id],
     });
     await newConversation.save();
 
-    return res.status(200).json({
-      _id: newConversation._id,
+    io.to(receiver._id.toString()).emit("newConversation", {
+      ...newConversation,
+      user: {
+        _id: sender._id,
+        username: sender.username,
+        picture: sender.picture,
+        firstName: sender.firstName,
+        surName: sender.surName,
+      },
+      messages: [],
+      lastMessage: {},
+    });
+    io.to(sender._id.toString()).emit("newConversation", {
+      ...newConversation,
       user: {
         _id: receiver._id,
         username: receiver.username,
@@ -362,14 +375,11 @@ exports.createConversation = async (req, res) => {
         firstName: receiver.firstName,
         surName: receiver.surName,
       },
-      lastMessage: {
-        message: "",
-        createdAt: "",
-        status: "",
-        sender: "",
-      },
       messages: [],
+      lastMessage: {},
     });
+
+    return res.status(200);
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
