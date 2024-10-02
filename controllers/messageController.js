@@ -46,6 +46,11 @@ exports.createMessage = async (req, res) => {
       conversationId: conversation._id,
     });
 
+    // io.to(sender._id.toString()).emit("newMessage", {
+    //   message: newMessage,
+    //   conversationId: conversation._id,
+    // });
+
     return res.status(200).json({ message: newMessage });
   } catch (err) {
     console.log(err);
@@ -151,90 +156,108 @@ exports.getConversation = async (req, res) => {
   }
 };
 
-exports.getMessages = async (req, res) => {
+// exports.getMessages = async (req, res) => {
+//   try {
+//     const { receiverId } = req.params;
+//     const user = req.user;
+//     if (!receiverId || !user) {
+//       return res
+//         .status(400)
+//         .json({ message: "receiverId ID and User ID are required" });
+//     }
+//     const conversation = await Conversation.findOne({
+//       participants: { $all: [user._id, receiverId] },
+//     });
+
+//     if (!conversation) {
+//       return res.status(404).json({ message: "Conversation not found" });
+//     }
+//     const messages = await Message.find({
+//       conversation: conversation._id,
+//     })
+//       .sort({
+//         createdAt: -1,
+//       })
+//       .exec();
+
+//     const decryptedMessages = messages.map((message) => {
+//       try {
+//         const decryptedMessage = decrypt(message.message);
+//         return {
+//           ...message._doc,
+//           message: decryptedMessage,
+//         };
+//       } catch (error) {
+//         console.error("Error decrypting message:", error);
+//         return {
+//           ...message._doc,
+//           message: "Error decrypting message",
+//         };
+//       }
+//     });
+
+//     console.log("decryptedMessages", decryptedMessages);
+
+//     // io.to(conversationId).emit("message", messages);
+
+//     return res.status(200).json(decryptedMessages);
+//   } catch (err) {
+//     console.log(err);
+//     return res.status(500).json(err);
+//   }
+// };
+
+exports.deleteConversation = async (req, res) => {
   try {
-    const { receiverId } = req.params;
+    const { conversationId } = req.params;
     const user = req.user;
-    if (!receiverId || !user) {
+
+    if (!conversationId || !user) {
       return res
         .status(400)
-        .json({ message: "receiverId ID and User ID are required" });
+        .json({ message: "Conversation ID and User ID are required" });
     }
-    const conversation = await Conversation.findOne({
-      participants: { $all: [user._id, receiverId] },
-    });
 
+    const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
-    const messages = await Message.find({
-      conversation: conversation._id,
-    })
-      .sort({
-        createdAt: -1,
-      })
-      .exec();
 
-    const decryptedMessages = messages.map((message) => {
-      try {
-        const decryptedMessage = decrypt(message.message);
-        return {
-          ...message._doc,
-          message: decryptedMessage,
-        };
-      } catch (error) {
-        console.error("Error decrypting message:", error);
-        return {
-          ...message._doc,
-          message: "Error decrypting message",
-        };
+    await conversation.visibleFor.pull(user._id);
+    await Message.findByIdAndUpdate(
+      { conversation: conversation._id },
+      {
+        $push: { deletedFor: user._id },
       }
-    });
-
-    console.log("decryptedMessages", decryptedMessages);
-
-    // io.to(conversationId).emit("message", messages);
-
-    return res.status(200).json(decryptedMessages);
+    );
+    await conversation.save();
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
   }
 };
 
-exports.deleteConversation = async (req, res) => {
+exports.deleteMessages = async (req, res) => {
   try {
-    const { receiverId } = req.params;
+    const { conversationId } = req.params;
     const user = req.user;
-    if (!receiverId || !user) {
+    if (!conversationId || !user) {
       return res
+
         .status(400)
-        .json({ message: "Receiver ID and User ID are required" });
+        .json({ message: "Conversation ID and User ID are required" });
     }
 
-    const conversation = await Conversation.findOne({
-      participants: { $all: [user._id, receiverId] },
-    });
-
+    const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    // Delete all messages in the conversation
     await Message.deleteMany({ conversation: conversation._id });
-
-    // Clear the messages array in the conversation
     conversation.messages = [];
     await conversation.save();
 
-    // Remove the receiver from the user's contacts
-
-    // Optionally, delete the conversation itself
-    // await Conversation.findByIdAndDelete(conversation._id);
-
-    return res
-      .status(200)
-      .json({ message: "Conversation and messages deleted successfully" });
+    return res.status(200).json({ message: "Messages deleted successfully" });
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
@@ -246,6 +269,7 @@ exports.getConversations = async (req, res) => {
     const user = req.user;
     const conversations = await Conversation.find({
       participants: { $in: [user._id] },
+      visibleFor: { $in: [user._id] },
     })
       .populate("participants", "username picture firstName surName")
       .populate({
@@ -320,7 +344,25 @@ exports.createConversation = async (req, res) => {
     }
     const conversation = await Conversation.findOne({
       participants: { $all: [sender._id.toString(), receiver._id.toString()] },
-    });
+    }).exec();
+    if (conversation) {
+      conversation.visibleFor.push(sender._id);
+      await conversation.save();
+
+      const { messages, ...conversationData } = conversation;
+
+      io.to(sender._id.toString()).emit("newConversation", {
+        ...conversationData,
+        user: {
+          _id: receiver._id,
+          username: receiver.username,
+          picture: receiver.picture,
+          firstName: receiver.firstName,
+          surName: receiver.surName,
+        },
+      });
+      return res.status(200).json(conversation);
+    }
 
     // check if conversation already exists
 
@@ -351,6 +393,7 @@ exports.createConversation = async (req, res) => {
 
     const newConversation = new Conversation({
       participants: [sender._id, receiver._id],
+      visibleFor: [sender._id, receiver._id],
     });
     await newConversation.save();
 
@@ -386,7 +429,7 @@ exports.createConversation = async (req, res) => {
   }
 };
 
-exports.getMoreMessages = async (req, res) => {
+exports.getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const { page } = req.query;
@@ -404,32 +447,16 @@ exports.getMoreMessages = async (req, res) => {
     }
 
     const messages = await Message.find({
-      conversation: conversation._id,
+      conversation: conversationId,
     })
       .sort({
         createdAt: -1,
       })
-      .skip(parseInt(page) * 10)
-      .limit(10)
+      .skip(parseInt(page) * 20)
+      .limit(20)
       .exec();
 
-    const decryptedMessages = messages.map((message) => {
-      try {
-        const decryptedMessage = decrypt(message.message);
-        return {
-          ...message._doc,
-          message: decryptedMessage,
-        };
-      } catch (error) {
-        console.error("Error decrypting message:", error);
-        return {
-          ...message._doc,
-          message: "Error decrypting message",
-        };
-      }
-    });
-
-    return res.status(200).json(decryptedMessages);
+    return res.status(200).json(messages);
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);

@@ -31,6 +31,12 @@ const messageSchema = new mongoose.Schema(
       enum: ["sent", "seen"],
       default: "sent",
     },
+    deletedFor: [
+      {
+        type: ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );
