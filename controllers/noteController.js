@@ -50,7 +50,6 @@ exports.deleteNote = async (req, res) => {
     if (!note) {
       return res.status(404).json({ message: "Note not found" });
     }
-    // await note.remove();
     return res.status(200).json({ message: "Note deleted successfully" });
   } catch (error) {
     console.log(error);

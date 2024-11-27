@@ -3,7 +3,6 @@ const User = require("../models/User");
 const Post = require("../models/Post");
 const Like = require("../models/Like");
 const Comment = require("../models/Comment");
-const Community = require("../models/Community");
 const Saved = require("../models/Saved");
 const cloudinary = require("../config/cloudinaryConfig");
 const Notification = require("../models/Notification");

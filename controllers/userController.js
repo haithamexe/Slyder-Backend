@@ -162,7 +162,7 @@ exports.activateAccount = async (req, res) => {
       sameSite: "none",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api/",
+      path: "/",
     });
 
     const accessToken = jwt.sign(
@@ -283,7 +283,7 @@ exports.login = async (req, res) => {
       sameSite: "none",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
-      path: "/api",
+      path: "/",
     });
 
     const accessToken = jwt.sign(
@@ -313,7 +313,7 @@ exports.refresh = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) {
-      res.clearCookie("refreshToken", { path: "/api" });
+      res.clearCookie("refreshToken", { path: "/" });
       return res.status(401).json({ message: "Unauthorized User" });
     }
     const accessToken = jwt.sign(
@@ -351,7 +351,7 @@ exports.auth = async (req, res) => {
 
     if (refreshDecoded.id !== accessDecoded.id) {
       // res.clearCookie("refreshToken", { path: "/api/user/" });
-      res.clearCookie("refreshToken", { path: "/api" });
+      res.clearCookie("refreshToken", { path: "/" });
       return res
         .status(401)
         .json({ message: "Unauthorized user doesnt match" });
@@ -359,7 +359,7 @@ exports.auth = async (req, res) => {
 
     const user = await User.findById(accessDecoded.id).exec();
     if (!user) {
-      res.clearCookie("refreshToken", { path: "/api" });
+      res.clearCookie("refreshToken", { path: "/" });
       return res.status(404).json({ message: "Unauthorized User" });
     }
 
@@ -383,8 +383,6 @@ exports.auth = async (req, res) => {
       day: user?.details?.day,
     };
 
-    const exposedPassword = await bcrypt.decodeBase64(user.password, 10);
-    console.log("hasshed Password", exposedPassword);
     return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -397,7 +395,7 @@ exports.logout = async (req, res) => {
     // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
     // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
     // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
-    res.clearCookie("refreshToken", { path: "/api" });
+    res.clearCookie("refreshToken", { path: "/" });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
     return res.status(500).json({ message: err.message });

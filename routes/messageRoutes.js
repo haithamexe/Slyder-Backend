@@ -10,22 +10,17 @@ const {
   createConversation,
   deleteConversation,
   getConversations,
-  // updateConversationStatus,
 } = require("../controllers/messageController");
 
+router.get("/conversations", protectRoute, getConversations);
 router.post("/create", protectRoute, createMessage);
+router.post("/conversation", protectRoute, createConversation);
+router.get("/messages/:conversationId/:page", protectRoute, getMessages);
+router.delete("/messages/:conversationId", protectRoute, deleteMessages);
 router.delete(
   "/conversation/:conversationId",
   protectRoute,
   deleteConversation
 );
-router.get("/conversations", protectRoute, getConversations);
-router.post("/conversation", protectRoute, createConversation);
-router.post("/messages/:conversationId", protectRoute, getMessages);
-router.delete("/messages/:conversationId", protectRoute, deleteMessages);
-// router.get("/:conversationId", protectRoute, getMessages);
-// router.get("/conversation/:receiverId", protectRoute, getConversation);
-// router.put("/:messageId", protectMessageRoute, updateMessageStatus);
-// router.delete("/:messageId", deleteMessage);
 
 module.exports = router;

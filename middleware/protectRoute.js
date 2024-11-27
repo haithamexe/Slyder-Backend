@@ -3,7 +3,7 @@ const User = require("../models/User.js");
 
 const protectRoute = async (req, res, next) => {
   try {
-    console.log("Token from cookie", req.cookies.refreshToken);
+    // console.log("Token from cookie", req.cookies.refreshToken);
     let token;
     // console.log(req);
     if (req.cookies.refreshToken) {
@@ -24,6 +24,7 @@ const protectRoute = async (req, res, next) => {
     }
     const user = await User.findById(decoded.id).exec();
     if (!user) {
+      res.clearCookie("refreshToken", { path: "/" });
       return res.status(401).json({
         message: "You are not authorized to access this route no user",
       });

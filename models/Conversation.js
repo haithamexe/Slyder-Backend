@@ -16,10 +16,6 @@ const conversationSchema = new mongoose.Schema(
         default: [],
       },
     ],
-    lastMessage: {
-      type: ObjectId,
-      ref: "Message",
-    },
     lastActive: {
       type: Date,
       default: Date.now,
@@ -47,18 +43,20 @@ const conversationSchema = new mongoose.Schema(
 
 conversationSchema.index({ participants: 1 });
 
-conversationSchema.post("save", async function (doc) {
-  if (doc.messages.length > 0) {
-    doc.lastMessage = doc.messages[doc.messages.length - 1];
-    await doc.save();
-  }
-});
+//less efficient
 
-conversationSchema.post("save", async function (doc) {
-  if (doc.visibleFor.length === 0) {
-    await doc.deleteOne();
-  }
-});
+// conversationSchema.post("save", async function (doc) {
+//   if (doc.messages.length > 0) {
+//     doc.lastMessage = doc.messages[doc.messages.length - 1];
+//     await doc.save();
+//   }
+// });
+
+// conversationSchema.post("save", async function (doc) {
+//   if (doc.visibleFor.length === 0) {
+//     await doc.deleteOne();
+//   }
+// });
 
 // conversationSchema.post("save", function (next) {
 //   if (this.messages.length > 0) {

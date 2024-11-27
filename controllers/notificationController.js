@@ -3,28 +3,6 @@ const mongoose = require("mongoose");
 const { io } = require("../socket");
 
 const User = mongoose.model("User");
-exports.createNotification = async (req, res) => {
-  // try {
-  //   const user = req.user;
-  //   const { title, content } = req.body;
-  //   if (!user || !title || !content) {
-  //     return res
-  //       .status(401)
-  //       .json({ message: "You are not authorized to access this route" });
-  //   }
-  //   const notification = new Notification({
-  //     sender: user._id,
-  //     receiver: user._id,
-  //   });
-  //   await notification.save();
-  //   res
-  //     .status(201)
-  //     .json({ message: "Notification created successfully", notification });
-  // } catch (error) {
-  //   console.log(error);
-  //   res.status(500).json({ message: "Internal server error" });
-  // }
-};
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -87,27 +65,3 @@ exports.markAsRead = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-// exports.getPostNotifications = async (req, res) => {
-//   try {
-//     const { userId } = req.params;
-//     const user = await User.findById(userId).exec();
-
-//     if (!user) {
-//       return res
-//         .status(401)
-//         .json({ message: "You are not authorized to access this route" });
-//     }
-//     const postNotifications = await Notification.find({
-//       user: user._id,
-//       type: "post",
-//     }).exec();
-//     if (!postNotifications) {
-//       return res.status(404).json({ message: "No post notifications found" });
-//     }
-//     res.status(200).json(postNotifications);
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
