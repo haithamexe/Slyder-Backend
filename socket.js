@@ -87,6 +87,7 @@ io.on("connection", (socket) => {
 
   socket.on("newMessage", async ({ message, conversationId, receiverId }) => {
     try {
+      console.log("newMessage sending " + " to " + conversationId);
       const newMessage = new Message({
         conversation: conversationId,
         message: message,
