@@ -31,7 +31,7 @@ app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("<h1>running</h1>");
+  res.sendFile(path.join(__dirname, "public", "api-info.html"));
 });
 app.use("/api/user", require("./routes/userRoutes"));
 app.use("/api/post", require("./routes/postRoutes"));
@@ -40,6 +40,9 @@ app.use("/api/note", require("./routes/noteRoutes"));
 app.use("/api/notification", require("./routes/notificationRoutes"));
 // app.use("/api/notification", require("./routes/notificationRoutes"));
 // app.use("/api/room", require("./routes/roomRoutes"));
+app.use("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "404.html"));
+});
 
 app.use(logger);
 app.use(errorHandler);

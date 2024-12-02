@@ -275,3 +275,5 @@
 20240728	04:34:23	9671931f-cf37-4a2a-b69f-c2e9eb2aa5e4	Error: cors not working properly
 20240728	04:34:23	6038e588-7057-4e2a-a7a1-ec22f85f7db3	Error: cors not working properly
 20240728	04:34:23	f7479c3c-8c6f-4687-b212-c56344d4371c	Error: cors not working properly
+20241201	00:17:07	cfaf801c-44ce-47d3-b6a1-98794b0d34aa	Error: ENOENT: no such file or directory, stat 'C:\Users\hthm\Desktop\slyder\Slyder-Backend\api-info.html'
+20241201	00:18:01	4af73086-6f63-43fa-8e29-f34633441017	Error: ENOENT: no such file or directory, stat 'C:\Users\hthm\Desktop\slyder\Slyder-Backend\public\api-info.html'

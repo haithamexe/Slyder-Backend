@@ -5895,3 +5895,5 @@
 20241122	03:31:03	5448b5c0-8a6c-4522-b76d-5c6165196d98	GET	undefined	/api/user/refresh
 20241122	06:18:34	6442fbf4-d272-424a-808b-853c34f2385f	GET	undefined	/api/user/auth
 20241124	09:07:40	88607960-ddfa-44a1-b367-761a09eb9082	GET	undefined	/favicon.ico
+20241201	00:08:01	bb86669a-94c2-4012-938a-bf814373d801	GET	undefined	/favicon.ico
+20241201	00:08:25	1b022e6b-0201-4b7a-9cde-cde15f1146a0	GET	undefined	/asd
