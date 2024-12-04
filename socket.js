@@ -29,12 +29,13 @@ io.on("connection", (socket) => {
     userSocketMap.set(userId, socket.id);
     socket.join(userId);
   }
-  //security issue here
+
+  // security issue here
   // const followersOnline = socket.user.following.filter((following) =>
   //   userSocketMap.has(following) ? following : null
   // );
-  // io.emit("getOnlineUsers", Object.keys(userSocketMap));
-  //
+
+  io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
 
   socket.on("joinConversations", (conversationIds) => {
     conversationIds.forEach((conversationId) => {
@@ -117,7 +118,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     if (userId) {
       userSocketMap.delete(userId);
-      // io.emit("getOnlineUsers", Object.keys(userSocketMap));
+      io.emit("getOnlineUsers", Object.keys(userSocketMap));
     }
   });
 });
