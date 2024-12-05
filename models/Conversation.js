@@ -37,6 +37,10 @@ const conversationSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    typing: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

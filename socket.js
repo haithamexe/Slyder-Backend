@@ -78,12 +78,14 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("typing", ({ conversationId }) => {
-    socket.to(conversationId).emit("typing", { conversationId });
+  socket.on("typing", (conversationId) => {
+    socket.to(conversationId).emit("typing", conversationId);
+    console.log("typing");
   });
 
-  socket.on("stopTyping", ({ conversationId }) => {
-    socket.to(conversationId).emit("stopTyping", { conversationId });
+  socket.on("stopTyping", (conversationId) => {
+    socket.to(conversationId).emit("stopTyping", conversationId);
+    console.log("Stopped typing");
   });
 
   socket.on("newMessage", async ({ message, conversationId, receiverId }) => {
