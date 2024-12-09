@@ -23,9 +23,9 @@ const notificationSchema = mongoose.Schema(
       type: ObjectId,
       ref: "Post",
     },
-    message: {
-      type: String,
-      default: "",
+    conversation: {
+      type: ObjectId,
+      ref: "Conversation",
     },
   },
   { timestamps: true }

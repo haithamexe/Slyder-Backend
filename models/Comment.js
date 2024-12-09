@@ -18,12 +18,10 @@ const commentSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    likes: [
-      {
-        type: ObjectId,
-        ref: "User",
-      },
-    ],
+    likes: {
+      type: [ObjectId],
+      ref: "User",
+    },
     parentComment: {
       type: ObjectId,
       ref: "Comment",

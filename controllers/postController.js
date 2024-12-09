@@ -35,16 +35,35 @@ exports.createPost = async (req, res) => {
   }
 };
 
+// exports.getPosts = async (req, res) => {
+//   try {
+//     const posts = await Post.find().select("_id").exec();
+//     if (!posts) {
+//       return res.status(404).json({ message: "Posts not found" });
+//     }
+//     return res.status(200).json([]);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.getPosts = async (req, res) => {
   try {
-    const posts = await Post.find().lean().exec();
-    return res.status(200).json(posts);
-    if (!posts) {
-      return res.status(404).json({ message: "Posts not found" });
-    }
+    const user = req.user;
+    const followingPosts = await Post.find({ user: { $in: user.following } })
+      .lean()
+      .exec();
+    const userPosts = await Post.find({ user: user._id }).lean().exec();
+    const posts = [...followingPosts, ...userPosts];
+    posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const sendPostsIds = posts.map((post) => post._id);
+    return res.status(200).json(sendPostsIds);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Server error" });
+    return res
+      .status(500)
+      .json({ message: "Server error while getting home posts" });
   }
 };
 
@@ -66,7 +85,11 @@ exports.getPost = async (req, res) => {
         },
         {
           path: "comments",
-          select: "content author",
+          select: "content author likes createdAt ",
+          populate: {
+            path: "author",
+            select: "username firstName surName picture",
+          },
         },
         {
           path: "savedBy",
@@ -426,13 +449,23 @@ exports.getHomePosts = async (req, res) => {
 
 exports.getTrendingPosts = async (req, res) => {
   try {
-    const posts = await Post.find({}).exec();
+    const { paging } = req.params;
+    const posts = await Post.find()
+      .skip(parseInt(paging) * 10)
+      .limit(10)
+      .lean()
+      .exec();
+    // const posts = await Post.find().limit().exec();
+    if (!posts || posts.length === 0) {
+      return res.status(404).json({ message: "Posts not found" });
+    }
+
     posts.sort((a, b) => b.likes.length - a.likes.length);
     const postsId = posts.map((post) => post?._id);
     console.log(postsId);
     return res.status(200).json(postsId);
   } catch (error) {
-    console.error(error.message);
+    console.error(error.message, "error");
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -605,25 +638,6 @@ exports.getPostsLikedByUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
-  }
-};
-
-exports.getPosts = async (req, res) => {
-  try {
-    const user = req.user;
-    const followingPosts = await Post.find({ user: { $in: user.following } })
-      .lean()
-      .exec();
-    const userPosts = await Post.find({ user: user._id }).lean().exec();
-    const posts = [...followingPosts, ...userPosts];
-    posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const sendPostsIds = posts.map((post) => post._id);
-    return res.status(200).json(sendPostsIds);
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: "Server error while getting home posts" });
   }
 };
 
