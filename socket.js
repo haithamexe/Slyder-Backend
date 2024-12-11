@@ -6,6 +6,7 @@ const protectSocket = require("./middleware/protectSocket");
 const User = require("./models/User");
 const Message = require("./models/Message");
 const Conversation = require("./models/Conversation");
+const Notification = require("./models/Notification");
 
 const app = express();
 const server = http.createServer(app);
@@ -49,16 +50,17 @@ io.on("connection", (socket) => {
     console.log("Joined", conversationId);
   });
 
-  socket.on("leaveConversation", (conversationId) => {
-    socket.leave(conversationId);
-  });
-
   socket.on("messageSeen", async ({ conversationId, messageId }) => {
     try {
       const status = await Message.findByIdAndUpdate(messageId, {
         status: "seen",
       });
-      if (!status) {
+      const notification = await Notification.findOneAndUpdate(
+        { conversation: conversationId, type: "message" },
+        { read: true }
+      );
+
+      if (!status || !notification) {
         socket.emit("error", {
           message: "Message not found",
           status: 404,
@@ -90,7 +92,6 @@ io.on("connection", (socket) => {
 
   socket.on("newMessage", async ({ message, conversationId, receiverId }) => {
     try {
-      console.log("newMessage sending " + " to " + conversationId);
       const newMessage = new Message({
         conversation: conversationId,
         message: message,
@@ -103,15 +104,24 @@ io.on("connection", (socket) => {
         createdAt: new Date().toISOString(),
       };
 
-      socket.to(conversationId).emit("newMessage", {
-        message: newMessageFormatted,
-        conversationId,
-      });
+      socket
+        .to(conversationId)
+        .emit("newMessage", newMessageFormatted, conversationId);
 
       const conversation = await Conversation.findById(conversationId);
       conversation.messages.push(newMessage._id);
+      const notification = new Notification({
+        receiver: receiverId,
+        sender: socket.user._id,
+        type: "message",
+        conversation: conversationId,
+      });
 
-      await Promise.all([newMessage.save(), conversation.save()]);
+      await Promise.all([
+        newMessage.save(),
+        conversation.save(),
+        notification.save(),
+      ]);
     } catch (error) {
       console.log(error);
     }
