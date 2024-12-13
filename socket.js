@@ -67,6 +67,8 @@ io.on("connection", (socket) => {
           event: "messageSeen",
         });
       } else {
+        console.log("message seen", conversationId, messageId);
+
         socket
           .to(conversationId)
           .emit("messageSeen", { conversationId, messageId });
