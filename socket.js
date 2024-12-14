@@ -50,8 +50,10 @@ io.on("connection", (socket) => {
     console.log("Joined", conversationId);
   });
 
-  socket.on("messageSeen", async ({ conversationId, messageId }) => {
+  socket.on("messageSeen", async (conversationId, messageId) => {
     try {
+      console.log("message seen", conversationId, messageId);
+
       const status = await Message.findByIdAndUpdate(messageId, {
         status: "seen",
       });
