@@ -297,6 +297,8 @@ exports.getConversations = async (req, res) => {
                 message: 1,
                 status: 1,
                 createdAt: 1,
+                sender: 1,
+                receiver: 1,
               },
             },
           ],

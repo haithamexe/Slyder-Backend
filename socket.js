@@ -50,37 +50,65 @@ io.on("connection", (socket) => {
     console.log("Joined", conversationId);
   });
 
-  socket.on("messageSeen", async (conversationId, messageId) => {
+  socket.on("messageSeen", async ({ conversationId }) => {
     try {
-      console.log("message seen", conversationId, messageId);
+      // console.log("message seen", conversationId, socket.user._id);
 
-      const status = await Message.findByIdAndUpdate(messageId, {
-        status: "seen",
-      });
-      const notification = await Notification.findOneAndUpdate(
-        { conversation: conversationId, type: "message" },
+      const status = await Message.updateMany(
+        {
+          conversation: conversationId,
+          sender: socket.user._id,
+          status: "sent",
+        },
+        { status: "seen" }
+      );
+
+      const notification = await Notification.updateMany(
+        {
+          conversation: conversationId,
+          type: "message",
+          read: false,
+          sender: socket.user._id,
+        },
         { read: true }
       );
 
-      if (!status || !notification) {
-        socket.emit("error", {
-          message: "Message not found",
-          status: 404,
-          event: "messageSeen",
-        });
+      if (!notification || !status) {
+        console.log("message seen error", conversationId, messageId);
       } else {
-        console.log("message seen", conversationId, messageId);
-
-        socket
-          .to(conversationId)
-          .emit("messageSeen", { conversationId, messageId });
+        socket.to(conversationId).emit("messageSeen", { conversationId });
       }
     } catch (error) {
-      socket.emit("error", {
-        message: "Internal server error",
-        status: 500,
-        event: "messageSeen",
-      });
+      console.log("message seen error", error.message);
+    }
+  });
+
+  socket.on("messageSeenWithId", async ({ conversationId, messageId }) => {
+    try {
+      const status = await Message.updateOne(
+        {
+          conversation: conversationId,
+          _id: messageId,
+          status: "sent",
+        },
+        { status: "seen" }
+      );
+
+      const notification = await Notification.updateOne(
+        {
+          conversation: conversationId,
+          type: "message",
+          read: false,
+          sender: socket.user._id,
+        },
+        { read: true }
+      );
+
+      if (!notification || !status) {
+        console.log("message seen error", conversationId, messageId);
+      }
+    } catch (error) {
+      console.log("message seen error", error.message);
     }
   });
 
@@ -114,6 +142,7 @@ io.on("connection", (socket) => {
 
       const conversation = await Conversation.findById(conversationId);
       conversation.messages.push(newMessage._id);
+
       const notification = new Notification({
         receiver: receiverId,
         sender: socket.user._id,

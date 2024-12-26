@@ -29,7 +29,6 @@ const messageSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["sent", "seen"],
       default: "sent",
     },
     visibleFor: [
@@ -40,7 +39,6 @@ const messageSchema = new mongoose.Schema(
     ],
     type: {
       type: String,
-      enum: ["text", "image", "video", "audio", "document"],
       default: "text",
     },
   },

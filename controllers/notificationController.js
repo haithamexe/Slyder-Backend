@@ -59,11 +59,11 @@ exports.getMessagesNotifications = async (req, res) => {
       },
     ]);
 
-    if (!messagesNotifications || messagesNotifications.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No messages notifications found" });
-    }
+    // const messagesNotifications = await Notification.find({
+    //   receiver: user._id,
+    //   type: "message",
+    //   read: false,
+    // }).sort({ createdAt: -1 });
 
     return res.status(200).json(messagesNotifications);
   } catch (error) {
@@ -76,12 +76,23 @@ exports.markAsRead = async (req, res) => {
   try {
     const user = req.user;
     const notifications = await Notification.updateMany(
-      { receiver: user._id, read: false },
+      { receiver: user._id, read: false, type: { $ne: "message" } },
       { read: true }
     ).exec();
     if (!notifications) {
       return res.status(404).json({ message: "No unread notifications found" });
     }
+
+    // notifications should be deleted
+
+    // const currentDate = new Date(Date.now() - 1000 * 60 * 60 * 3);
+    // await Notification.deleteMany({
+    //   receiver: user._id,
+    //   read: true,
+    //   type: { $ne: "message" },
+    //   createdAt: { $lt: currentDate },
+    // }).exec();
+
     // io.to(user._id).emit("clearNotifications");
     res.status(200).json({ message: "Notifications marked as read" });
   } catch (error) {
