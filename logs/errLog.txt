@@ -277,3 +277,28 @@
 20240728	04:34:23	f7479c3c-8c6f-4687-b212-c56344d4371c	Error: cors not working properly
 20241201	00:17:07	cfaf801c-44ce-47d3-b6a1-98794b0d34aa	Error: ENOENT: no such file or directory, stat 'C:\Users\hthm\Desktop\slyder\Slyder-Backend\api-info.html'
 20241201	00:18:01	4af73086-6f63-43fa-8e29-f34633441017	Error: ENOENT: no such file or directory, stat 'C:\Users\hthm\Desktop\slyder\Slyder-Backend\public\api-info.html'
+20241226	14:57:17	3bb3f840-62bd-4814-8b41-6d49032e12b3	Error: cors not working properly
+20241226	14:57:17	bd31bc24-21e9-49df-a142-6a4baa52b968	Error: cors not working properly
+20241226	14:57:17	da9557f8-bd1e-4b33-9211-ef81f5efce5f	Error: cors not working properly
+20241226	14:57:17	50c35b23-bcc1-459d-8c9a-50a5d8f81b56	Error: cors not working properly
+20241226	14:57:17	8d689c82-78e7-4902-8e76-e8999c251c59	Error: cors not working properly
+20241226	14:57:17	d111c333-3e43-4ac1-80ac-417728e9adc6	Error: cors not working properly
+20241226	14:57:17	ed95eba9-e1bf-415c-bb6c-0e0fac292fd9	Error: cors not working properly
+20241226	14:57:17	a521da03-e69a-44a8-8eb6-a0065727e496	Error: cors not working properly
+20241226	14:57:17	1adcbcfc-a4c9-441c-8f3c-2ccc35a0834e	Error: cors not working properly
+20241226	14:57:17	8b95a9a0-ac32-4a74-8953-3dec8267d1a6	Error: cors not working properly
+20241226	14:57:19	a38e5f21-b737-4675-84b0-d051df7a4769	Error: cors not working properly
+20241226	14:57:19	2c0a7ed4-42fb-4557-8e7a-7795b1f045ac	Error: cors not working properly
+20241226	14:57:21	ff25b4a5-e599-4791-9d77-ada6198ad4c8	Error: cors not working properly
+20241226	14:57:21	754939cc-2e5d-4a39-9e11-6565067555a4	Error: cors not working properly
+20241226	14:57:27	f9891a24-2cea-47e1-9916-b4516a6a7f58	Error: cors not working properly
+20241226	14:57:28	a860d19d-1868-4a80-94f3-84fba313c43d	Error: cors not working properly
+20241226	14:57:28	4becf94c-bfc3-475a-8c3b-55cc0980308d	Error: cors not working properly
+20241226	14:57:29	e59600dd-88c9-46ba-b3ae-7c6cbcdc1e33	Error: cors not working properly
+20241226	14:57:29	6bdc2c86-b5bf-4296-9a63-11a50c57d29a	Error: cors not working properly
+20241226	14:57:29	974948f8-cc32-4e46-a596-869770706587	Error: cors not working properly
+20241226	14:57:29	30fa3478-9055-404e-a2b7-2c1507059469	Error: cors not working properly
+20241226	14:57:29	9b5588dc-aed5-4890-80fb-248cd7fb0187	Error: cors not working properly
+20241226	14:57:30	e3b1fe29-2344-4685-9557-31f3d6f3835b	Error: cors not working properly
+20241226	14:57:33	4649d629-2bfa-4380-8b1e-dcef62a1e98a	Error: cors not working properly
+20241226	14:57:36	1e50e63f-4fd9-4bac-99ce-d4613ea2bd96	Error: cors not working properly
