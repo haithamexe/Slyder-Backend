@@ -114,6 +114,9 @@ exports.activateAccount = async (req, res) => {
       process.env.JWT_REFRESH_SECRET,
       {
         expiresIn: "1y",
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
       }
     );
 
@@ -159,8 +162,8 @@ exports.activateAccount = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "None",
       secure: true,
+      sameSite: "None",
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
     });
@@ -170,6 +173,8 @@ exports.activateAccount = async (req, res) => {
       process.env.JWT_ACCESS_SECRET,
       {
         expiresIn: "15m",
+        secure: true,
+        sameSite: "None",
       }
     );
 
@@ -215,6 +220,8 @@ exports.login = async (req, res) => {
         process.env.JWT_SECRET_VERIFICATION,
         {
           expiresIn: "30m",
+          secure: true,
+          sameSite: "None",
         }
       );
 
@@ -234,7 +241,10 @@ exports.login = async (req, res) => {
       { id: user._id.toString() },
       process.env.JWT_REFRESH_SECRET,
       {
+        httpOnly: true,
         expiresIn: "1y",
+        secure: true,
+        sameSite: "None",
       }
     );
 
@@ -280,8 +290,8 @@ exports.login = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "None",
       secure: true,
+      sameSite: "None",
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
     });
@@ -291,6 +301,8 @@ exports.login = async (req, res) => {
       process.env.JWT_ACCESS_SECRET,
       {
         expiresIn: "15m",
+        secure: true,
+        sameSite: "None",
       }
     );
 
