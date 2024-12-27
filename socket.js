@@ -58,11 +58,7 @@ const io = new Server(server, {
     ],
     credentials: true,
     methods: ["GET", "POST"]
-  },
-  path: '/',
-  transports: ['polling', 'websocket'], // Specify both transport types
-  pingTimeout: 60000,
-  pingInterval: 25000
+  },  
 });
 
 io.use(protectSocket);
