@@ -1,5 +1,4 @@
 const { Server } = require("socket.io");
-const https = require("https");
 const http = require("http");
 const express = require("express");
 const corsOptions = require("./config/corsOptions");
@@ -19,17 +18,35 @@ const server = http.createServer(app);
 //   server = https.createServer(app);
 // }
 
+// const io = new Server(server, {
+//   cors: {
+//     origin: [
+//       "http://localhost:3000",
+//       "https://slyderback.vercel.app",
+//       "https://slyder-omega.vercel.app",
+//     ],
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//     credentials: true,
+//   },
+// });
+
+
 const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:3000",
       "https://slyderback.vercel.app",
       "https://slyder-omega.vercel.app",
+      "https://slyder.vercel.app",  // Add your main Vercel domain
+      "https://*.vercel.app",       // Allow all Vercel preview deployments
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "refreshToken"], // Add allowed headers
   },
+  transports: ['websocket', 'polling'], // Explicitly specify transport methods
 });
+
 
 io.use(protectSocket);
 
