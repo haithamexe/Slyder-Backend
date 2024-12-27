@@ -112,53 +112,7 @@ exports.activateAccount = async (req, res) => {
     const refreshToken = jwt.sign(
       { id: user._id.toString() },
       process.env.JWT_REFRESH_SECRET,
-      {
-        expiresIn: "1y",
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-      }
     );
-
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/user/",
-    // });
-
-    // res.cookie("refreshTokenMessage", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/message/",
-    // });
-
-    // res.cookie("refreshTokenNotes", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/note/",
-    // });
-
-    // res.cookie("refreshTokenPost", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/post/",
-    // });
-
-    // res.cookie("refreshTokenNotifications", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/notification/",
-    // });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -171,11 +125,6 @@ exports.activateAccount = async (req, res) => {
     const accessToken = jwt.sign(
       { id: user._id.toString() },
       process.env.JWT_ACCESS_SECRET,
-      {
-        expiresIn: "15m",
-        secure: true,
-        sameSite: "None",
-      }
     );
 
     return res.status(200).json({
@@ -220,8 +169,6 @@ exports.login = async (req, res) => {
         process.env.JWT_SECRET_VERIFICATION,
         {
           expiresIn: "30m",
-          secure: true,
-          sameSite: "None",
         }
       );
 
@@ -239,54 +186,9 @@ exports.login = async (req, res) => {
 
     const refreshToken = jwt.sign(
       { id: user._id.toString() },
-      process.env.JWT_REFRESH_SECRET,
-      {
-        httpOnly: true,
-        expiresIn: "1y",
-        secure: true,
-        sameSite: "None",
-      }
+      process.env.JWT_REFRESH_SECRET, 
     );
 
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/user/",
-    // });
-
-    // res.cookie("refreshTokenMessage", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/message/",
-    // });
-
-    // res.cookie("refreshTokenNote", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/note/",
-    // });
-
-    // res.cookie("refreshTokenPost", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/post/",
-    // });
-
-    // res.cookie("refreshTokenNotifications", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/notification/",
-    // });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -301,8 +203,6 @@ exports.login = async (req, res) => {
       process.env.JWT_ACCESS_SECRET,
       {
         expiresIn: "15m",
-        secure: true,
-        sameSite: "None",
       }
     );
 
