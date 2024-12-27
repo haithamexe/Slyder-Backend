@@ -22,10 +22,11 @@ const { app, server } = require("./socket");
 
 const PORT = process.env.PORT || 8000;
 
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 dbConnect();
 // const app = express();
 app.use(cookieParser());
-app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(express.json());
@@ -56,6 +57,16 @@ app.use((err, req, res, next) => {
   next();
 });
 
+mongoose.connection.once("open", () => {
+  console.log("connected to database");
+  if (process.env.NODE_ENV !== "production") {
+    server.listen(PORT, () => console.log("running on port" + PORT));
+  }
+});
+mongoose.connection.on("error", () => {
+  console.log("server not running, database error", err);
+});
+
 // const server = http.createServer(app);
 // const io = socketIO(server, {
 //   cors: corsOptions,
@@ -70,13 +81,3 @@ app.use((err, req, res, next) => {
 //     console.log("socket disconnected");
 //   });
 // });
-
-mongoose.connection.once("open", () => {
-  console.log("connected to database");
-  if (process.env.NODE_ENV !== "production") {
-    server.listen(PORT, () => console.log("running on port" + PORT));
-  }
-});
-mongoose.connection.on("error", () => {
-  console.log("server not running, database error", err);
-});
