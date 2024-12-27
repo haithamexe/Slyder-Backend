@@ -3,6 +3,8 @@ const allowedOrigins = [
   "http://192.168.1.1:3000",
   "http://192.168.1.111:3000",
   "http://localhost:3000",
+  "https://slyder-omega.vercel.app/",
+  "https://slyderback.vercel.app/",
 ];
 
 const corsOptions = {
