@@ -10,7 +10,6 @@ const Notification = require("./models/Notification");
 const cors = require("cors");
 
 const app = express();
-app.use(cors(corsOptions));
 const server = http.createServer(app);
 
 // if (process.env.NODE_ENV !== "production") {
