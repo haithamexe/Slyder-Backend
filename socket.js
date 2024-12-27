@@ -8,14 +8,16 @@ const User = require("./models/User");
 const Message = require("./models/Message");
 const Conversation = require("./models/Conversation");
 const Notification = require("./models/Notification");
+const cors = require("cors");
 
 const app = express();
-let server;
-if (process.env.NODE_ENV !== "production") {
-  server = http.createServer(app);
-} else {
-  server = https.createServer(app);
-}
+app.use(cors(corsOptions));
+const server = https.createServer(app);
+
+// if (process.env.NODE_ENV !== "production") {
+// } else {
+//   server = https.createServer(app);
+// }
 
 const io = new Server(server, {
   cors: {
