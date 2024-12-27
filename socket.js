@@ -65,18 +65,18 @@ const io = new Server(server, {
     origin: [
       "http://localhost:3000",
       "https://slyder-omega.vercel.app",
+      "https://slyder.vercel.app",
       "https://slyder-backend.onrender.com",
-      // Add your Render frontend URL
     ],
     credentials: true,
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
   },
   path: '/',
-  transports: ['websocket'],
+  transports: ['websocket', 'polling'], // Include both transports
   pingTimeout: 60000,
   pingInterval: 25000,
-  cookie: true
+  allowEIO3: true, // Enable Engine.IO v3 compatibility
 });
 
 io.use(protectSocket);
