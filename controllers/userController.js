@@ -159,7 +159,7 @@ exports.activateAccount = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: "None",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
@@ -280,7 +280,7 @@ exports.login = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: "None",
       secure: true,
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
