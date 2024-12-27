@@ -31,23 +31,47 @@ const server = http.createServer(app);
 // });
 
 
+// const io = new Server(server, {
+//   cors: {
+//     origin: [
+//       "http://localhost:3000",
+//       "https://slyderback.vercel.app",
+//       "https://slyder-omega.vercel.app",
+//       "https://slyder.vercel.app",  // Add your main Vercel domain
+//       "https://*.vercel.app",       // Allow all Vercel preview deployments
+//     ],
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//     credentials: true,
+//     allowedHeaders: ["Content-Type", "Authorization", "refreshToken"], // Add allowed headers
+//   },
+//   transports: ['polling'], // Explicitly specify transport methods
+//   path: '/socket.io', // Explicitly specify the path to the socket.io server
+//   allowEIO3: true, // Explicitly allow the EIO3 protocol
+//   pingTimeout: 60000, // 60 seconds
+// });
+
 const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:3000",
-      "https://slyderback.vercel.app",
       "https://slyder-omega.vercel.app",
-      "https://slyder.vercel.app",  // Add your main Vercel domain
-      "https://*.vercel.app",       // Allow all Vercel preview deployments
+      "https://slyder.vercel.app"
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "refreshToken"], // Add allowed headers
+    methods: ["GET", "POST"],
+    credentials: true
   },
-  transports: ['polling'], // Explicitly specify transport methods
-  path: '/socket.io', // Explicitly specify the path to the socket.io server
-  allowEIO3: true, // Explicitly allow the EIO3 protocol
-  pingTimeout: 60000, // 60 seconds
+  transports: ['polling'],
+  path: '/',
+  cookie: {
+    name: "refreshToken", // Make sure this matches your cookie name
+    httpOnly: true,
+    sameSite: "None",
+    secure: true
+  },
+  allowRequest: (req, callback) => {
+    // The cookie will be automatically included in the request
+    callback(null, true);
+  }
 });
 
 
