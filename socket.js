@@ -12,7 +12,7 @@ const cors = require("cors");
 
 const app = express();
 app.use(cors(corsOptions));
-const server = https.createServer(app);
+const server = http.createServer(app);
 
 // if (process.env.NODE_ENV !== "production") {
 // } else {
