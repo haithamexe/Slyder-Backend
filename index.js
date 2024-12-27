@@ -25,7 +25,6 @@ const PORT = process.env.PORT || 8000;
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 dbConnect();
-// const app = express();
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
@@ -39,14 +38,10 @@ app.use("/api/post", require("./routes/postRoutes"));
 app.use("/api/message", require("./routes/messageRoutes"));
 app.use("/api/note", require("./routes/noteRoutes"));
 app.use("/api/notification", require("./routes/notificationRoutes"));
-// app.use("/api/notification", require("./routes/notificationRoutes"));
-// app.use("/api/room", require("./routes/roomRoutes"));
 app.use("*", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "404.html"));
 });
 
-app.use(logger);
-app.use(errorHandler);
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     console.error("Bad JSON");

@@ -48,16 +48,35 @@ const server = http.createServer(app);
 //   pingTimeout: 60000, // 60 seconds
 // });
 
+// const io = new Server(server, {
+//   cors: {
+//     origin: [
+//       "http://localhost:3000",
+//       "https://slyder-omega.vercel.app",
+//       "https://slyder-backend.onrender.com"
+//     ],
+//     credentials: true,
+//     methods: ["GET", "POST"]
+//   },  
+// });
+
 const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:3000",
       "https://slyder-omega.vercel.app",
-      "https://slyder.vercel.app"
+      "https://slyder-backend.onrender.com",
+      // Add your Render frontend URL
     ],
     credentials: true,
-    methods: ["GET", "POST"]
-  },  
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  },
+  path: '/',
+  transports: ['websocket'],
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  cookie: true
 });
 
 io.use(protectSocket);

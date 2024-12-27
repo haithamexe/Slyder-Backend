@@ -1,6 +1,6 @@
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://slyderback.vercel.app",
+  "https://slyder-backend.onrender.com",
   "https://slyder-omega.vercel.app",
 ];
 
