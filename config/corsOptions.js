@@ -1,7 +1,7 @@
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://slyder-omega.vercel.app/",
-  "https://slyderback.vercel.app/",
+  "https://slyderback.vercel.app",
+  "https://slyder-omega.vercel.app",
 ];
 
 const corsOptions = {
@@ -13,8 +13,8 @@ const corsOptions = {
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  optionsSuccessStatus: 200,
 };
 
 module.exports = corsOptions;
