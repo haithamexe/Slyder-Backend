@@ -30,7 +30,6 @@ const server = http.createServer(app);
 //   },
 // });
 
-
 // const io = new Server(server, {
 //   cors: {
 //     origin: [
@@ -57,21 +56,12 @@ const io = new Server(server, {
       "https://slyder-omega.vercel.app",
       "https://slyder.vercel.app"
     ],
-    methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST"]
   },
+  path: '/', // Changed to match your auth path
   transports: ['polling'],
-  path: '/',
-  cookie: {
-    name: "refreshToken", // Make sure this matches your cookie name
-    httpOnly: true,
-    sameSite: "None",
-    secure: true
-  },
-  allowRequest: (req, callback) => {
-    // The cookie will be automatically included in the request
-    callback(null, true);
-  }
+  pingTimeout: 60000
 });
 
 
