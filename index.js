@@ -59,9 +59,7 @@ app.use((err, req, res, next) => {
 
 mongoose.connection.once("open", () => {
   console.log("connected to database");
-  if (process.env.NODE_ENV !== "production") {
-    server.listen(PORT, () => console.log("running on port" + PORT));
-  }
+  server.listen(PORT, () => console.log("running on port " + PORT));
 });
 mongoose.connection.on("error", () => {
   console.log("server not running, database error", err);
