@@ -44,7 +44,10 @@ const io = new Server(server, {
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "refreshToken"], // Add allowed headers
   },
-  transports: ['websocket', 'polling'], // Explicitly specify transport methods
+  transports: ['polling'], // Explicitly specify transport methods
+  path: '/socket.io', // Explicitly specify the path to the socket.io server
+  allowEIO3: true, // Explicitly allow the EIO3 protocol
+  pingTimeout: 60000, // 60 seconds
 });
 
 
