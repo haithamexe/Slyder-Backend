@@ -70,10 +70,7 @@ const io = new Server(server, {
     ],
     credentials: true,
     methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   },
-  path: '/',
-  transports: ['websocket', 'polling'], // Include both transports
   pingTimeout: 60000,
   pingInterval: 25000,
   allowEIO3: true, // Enable Engine.IO v3 compatibility
