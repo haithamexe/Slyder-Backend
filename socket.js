@@ -12,7 +12,15 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: corsOptions,
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "https://slyderback.vercel.app",
+      "https://slyder-omega.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    credentials: true,
+  },
 });
 
 io.use(protectSocket);
@@ -54,24 +62,44 @@ io.on("connection", (socket) => {
     try {
       // console.log("message seen", conversationId, socket.user._id);
 
-      const status = await Message.updateMany(
-        {
-          conversation: conversationId,
-          sender: socket.user._id,
-          status: "sent",
-        },
-        { status: "seen" }
-      );
+      // const status = await Message.updateMany(
+      //   {
+      //     conversation: conversationId,
+      //     sender: socket.user._id,
+      //     status: "sent",
+      //   },
+      //   { status: "seen" }
+      // );
 
-      const notification = await Notification.updateMany(
-        {
-          conversation: conversationId,
-          type: "message",
-          read: false,
-          sender: socket.user._id,
-        },
-        { read: true }
-      );
+      // const notification = await Notification.updateMany(
+      //   {
+      //     conversation: conversationId,
+      //     type: "message",
+      //     read: false,
+      //     sender: socket.user._id,
+      //   },
+      //   { read: true }
+      // );
+
+      const [status, notification] = await Promise.all([
+        Message.updateMany(
+          {
+            conversation: conversationId,
+            sender: socket.user._id,
+            status: "sent",
+          },
+          { status: "seen" }
+        ),
+        Notification.updateMany(
+          {
+            conversation: conversationId,
+            type: "message",
+            read: false,
+            sender: socket.user._id,
+          },
+          { read: true }
+        ),
+      ]);
 
       if (!notification || !status) {
         console.log("message seen error", conversationId, messageId);
@@ -90,6 +118,7 @@ io.on("connection", (socket) => {
           conversation: conversationId,
           _id: messageId,
           status: "sent",
+          // sender: socket.user._id,
         },
         { status: "seen" }
       );
@@ -99,7 +128,7 @@ io.on("connection", (socket) => {
           conversation: conversationId,
           type: "message",
           read: false,
-          sender: socket.user._id,
+          // sender: socket.user._id,
         },
         { read: true }
       );
