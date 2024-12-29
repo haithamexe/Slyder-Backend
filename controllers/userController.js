@@ -316,13 +316,33 @@ exports.auth = async (req, res) => {
   }
 };
 
+// exports.logout = async (req, res) => {
+//   try {
+//     // res.clearCookie("refreshToken", { path: "/api/user/" });
+//     // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
+//     // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
+//     // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
+//     res.clearCookie("refreshToken", { path: "/" });
+//     return res.status(200).json({ message: "Logged out" });
+//   } catch (err) {
+//     return res.status(500).json({ message: err.message });
+//   }
+// };
+
 exports.logout = async (req, res) => {
   try {
-    // res.clearCookie("refreshToken", { path: "/api/user/" });
-    // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
-    // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
-    // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
-    res.clearCookie("refreshToken", { path: "/" });
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/",
+      partitioned: true, // Add this for iOS
+      domain:
+        process.env.NODE_ENV === "production"
+          ? "slyder-omega.vercel.app"
+          : "localhost",
+    });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
