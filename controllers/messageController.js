@@ -442,6 +442,8 @@ exports.deleteConversation = async (req, res) => {
     );
 
     await conversation.save();
+
+    return res.status(200).json({ message: "deleted" });
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
