@@ -58,3 +58,41 @@ router.get("/contacts/:userId", getUserContacts);
 router.get("/search/:query", getUserSearched);
 
 module.exports = router;
+
+//reworker 
+
+// // Public routes (no auth required)
+// router.post("/register", register);
+// router.post("/activate", activateAccount);
+// router.post("/login", login);
+// router.post("/refreshActivation", refreshActivationToken);
+// router.post("/forgotPassword", forgotPassword);
+// router.post("/resetPassword", resetPassword);
+
+// // Protected routes (auth required)
+// router.post("/logout", protectRoute, logout);
+// router.post("/refresh", refresh);  // Keep this unprotected as it needs to work with expired tokens
+// router.post("/auth", protectRoute, auth);
+// router.delete("/delete", protectRoute, deleteUser);
+// router.put("/update/:id", protectRoute, updateUser);
+// router.get("/username/:username", protectRoute, getUserByUsername);
+
+// // User interaction routes
+// router.put("/:userId/follow", protectRoute, followUser);
+// router.put("/:userId/unfollow", protectRoute, unfollowUser);
+// router.get("/:userId/followers", protectRoute, getFollowers);
+// router.get("/:userId/following", protectRoute, getFollowing);
+
+// // Remove duplicate routes
+// // router.get("/followers/:userId", getFollowers);  // Duplicate
+// // router.get("/following/:userId", getFollowing);  // Duplicate
+// // router.put("/follow/:userId", followUser);       // Duplicate
+// // router.put("/unfollow/:userId", unfollowUser);  // Duplicate
+
+// // User management routes
+// router.put("/updateEmail", protectRoute, updateUserEmail);
+// router.put("/updatePassword", protectRoute, updateUserPassword);
+// router.put("/:userId/suspend", protectRoute, suspendUser);
+// router.put("/:userId/unsuspend", protectRoute, unsuspendUser);
+// router.get("/contacts/:userId", protectRoute, getUserContacts);
+// router.get("/search/:query", protectRoute, getUserSearched);

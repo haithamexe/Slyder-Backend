@@ -109,17 +109,24 @@ exports.activateAccount = async (req, res) => {
     user.verified = true;
     await user.save();
 
+   
     const refreshToken = jwt.sign(
       { id: user._id.toString() },
-      process.env.JWT_REFRESH_SECRET,
+      process.env.JWT_REFRESH_SECRET, 
+      {
+        expiresIn: "365d",
+      }
     );
+
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "None",
+      sameSite: "none",
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
+      partitioned: true,  // Add this for iOS
+      domain:  process.env.NODE_ENV === "production" ? "slyder-omega.vercel.app" : "localhost",
     });
 
     const accessToken = jwt.sign(
@@ -187,15 +194,20 @@ exports.login = async (req, res) => {
     const refreshToken = jwt.sign(
       { id: user._id.toString() },
       process.env.JWT_REFRESH_SECRET, 
+      {
+        expiresIn: "365d",
+      }
     );
 
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "None",
+      sameSite: "none",
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
+      partitioned: true , // Add this for iOS
+      domain:  process.env.NODE_ENV === "production" ? "slyder-omega.vercel.app" : "localhost",
     });
 
     const accessToken = jwt.sign(
