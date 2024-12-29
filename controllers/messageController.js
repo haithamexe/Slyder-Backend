@@ -126,6 +126,7 @@ exports.createMessage = async (req, res) => {
       sender: sender._id,
       receiver: receiver,
       message: message,
+      visibleFor: [sender._id, receiver],
     });
 
     io.to(receiver.toString()).emit("newMessage", {
@@ -299,6 +300,7 @@ exports.getConversations = async (req, res) => {
                 createdAt: 1,
                 sender: 1,
                 receiver: 1,
+                visibleFor: 1,
               },
             },
           ],
@@ -356,6 +358,7 @@ exports.getMessages = async (req, res) => {
 
     const messages = await Message.find({
       conversation: conversationId,
+      visibleFor: { $in: [user._id] },
     })
       .sort({
         createdAt: -1,
