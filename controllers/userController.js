@@ -120,7 +120,7 @@ exports.activateAccount = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      sameSite: "None",
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
       partitioned: true, // Add this for iOS
@@ -199,7 +199,7 @@ exports.login = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      sameSite: "None",
       path: "/",
     });
 
@@ -224,7 +224,7 @@ exports.refresh = async (req, res) => {
   try {
     // console.log(req.cookies);
     const token = req?.cookies?.refreshToken;
-    if (!token) {
+    if (!token || token === "null") {
       return res.status(401).json({ message: "Unauthorized" + req.cookies });
     }
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
@@ -243,7 +243,7 @@ exports.refresh = async (req, res) => {
 
     return res.status(200).json({ accessToken });
   } catch (err) {
-    return res.status(500).json({ message: err });
+    return res.status(500).json({ message: err.message });
   }
 };
 

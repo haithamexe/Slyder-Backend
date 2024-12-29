@@ -57,7 +57,7 @@ const server = http.createServer(app);
 //     ],
 //     credentials: true,
 //     methods: ["GET", "POST"]
-//   },  
+//   },
 // });
 
 const io = new Server(server, {
@@ -70,6 +70,7 @@ const io = new Server(server, {
     ],
     credentials: true,
     methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
   pingTimeout: 60000,
   pingInterval: 25000,
