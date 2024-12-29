@@ -263,7 +263,7 @@ exports.auth = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (!accessToken || !refreshToken) {
-      return res.status(404).json({ message: "Unauthorized no Tokens" });
+      return res.status(401).json({ message: "Unauthorized no Tokens" });
     }
 
     const refreshDecoded = jwt.verify(
