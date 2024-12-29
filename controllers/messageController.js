@@ -113,20 +113,22 @@ exports.createMessage = async (req, res) => {
 
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
-      conversation = new Conversation({
-        participants: [sender._id, receiver._id],
-      });
-      // await conversation.save();
+      // conversation = new Conversation({
+      //   participants: [sender._id, receiver._id],
+      // });
+
+      return res.status(404).json({ message: "Conversation not found" });
     }
+
     const receiver = conversation.participants.find(
       (participant) => participant.toString() !== sender._id.toString()
     );
     const newMessage = new Message({
       conversation: conversation._id,
       sender: sender._id,
-      receiver: receiver,
+      receiver: receiver._id,
       message: message,
-      visibleFor: [sender._id, receiver],
+      visibleFor: [sender._id, receiver._id],
     });
 
     io.to(receiver.toString()).emit("newMessage", {

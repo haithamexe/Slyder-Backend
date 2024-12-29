@@ -212,6 +212,7 @@ io.on("connection", (socket) => {
         message: message,
         sender: socket.user._id,
         receiver: receiverId,
+        visibleFor: [socket.user._id, receiverId],
       });
 
       const newMessageFormatted = {
