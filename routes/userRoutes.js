@@ -59,7 +59,7 @@ router.get("/search/:query", getUserSearched);
 
 module.exports = router;
 
-//reworker 
+//reworker
 
 // // Public routes (no auth required)
 // router.post("/register", register);

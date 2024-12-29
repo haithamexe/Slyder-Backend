@@ -124,10 +124,6 @@ exports.activateAccount = async (req, res) => {
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
       partitioned: true, // Add this for iOS
-      domain:
-        process.env.NODE_ENV === "production"
-          ? "slyder-omega.vercel.app"
-          : "localhost",
     });
 
     const accessToken = jwt.sign(
@@ -204,13 +200,7 @@ exports.login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
-      partitioned: true, // Add this for iOS
-      domain:
-        process.env.NODE_ENV === "production"
-          ? "slyder-omega.vercel.app"
-          : "localhost",
     });
 
     const accessToken = jwt.sign(
@@ -233,7 +223,7 @@ exports.login = async (req, res) => {
 exports.refresh = async (req, res) => {
   try {
     // console.log(req.cookies);
-    const token = req.cookies.refreshToken;
+    const token = req?.cookies?.refreshToken;
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" + req.cookies });
     }
@@ -259,11 +249,11 @@ exports.refresh = async (req, res) => {
 
 exports.auth = async (req, res) => {
   try {
-    const accessToken = req.body.accessToken;
-    const refreshToken = req.cookies.refreshToken;
+    const accessToken = req?.body?.accessToken;
+    const refreshToken = req?.cookies?.refreshToken;
 
     if (!accessToken || !refreshToken) {
-      return res.status(401).json({ message: "Unauthorized no Tokens" });
+      return res.status(404).json({ message: "Unauthorized no Tokens" });
     }
 
     const refreshDecoded = jwt.verify(
@@ -316,30 +306,17 @@ exports.auth = async (req, res) => {
   }
 };
 
-// exports.logout = async (req, res) => {
-//   try {
-//     // res.clearCookie("refreshToken", { path: "/api/user/" });
-//     // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
-//     // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
-//     // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
-//     res.clearCookie("refreshToken", { path: "/" });
-//     return res.status(200).json({ message: "Logged out" });
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// };
-
 exports.logout = async (req, res) => {
   try {
+    // res.clearCookie("refreshToken", { path: "/api/user/" });
+    // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
+    // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
+    // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: true,
       sameSite: "none",
       path: "/",
-      domain:
-        process.env.NODE_ENV === "production"
-          ? "slyder-omega.vercel.app"
-          : "localhost",
     });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
