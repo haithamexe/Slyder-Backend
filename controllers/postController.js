@@ -210,8 +210,6 @@ const deletePost = async (req, res) => {
       .select("followers -_id")
       .exec();
 
-    console.log(userFollowers);
-
     userFollowers.followers.map((follower) =>
       invalidateUserFeedCache(follower)
     );

@@ -13,54 +13,6 @@ const cron = require("node-cron");
 const app = express();
 const server = http.createServer(app);
 
-// if (process.env.NODE_ENV !== "production") {
-// } else {
-//   server = https.createServer(app);
-// }
-
-// const io = new Server(server, {
-//   cors: {
-//     origin: [
-//       "http://localhost:3000",
-//       "https://slyderback.vercel.app",
-//       "https://slyder-omega.vercel.app",
-//     ],
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-//     credentials: true,
-//   },
-// });
-
-// const io = new Server(server, {
-//   cors: {
-//     origin: [
-//       "http://localhost:3000",
-//       "https://slyderback.vercel.app",
-//       "https://slyder-omega.vercel.app",
-//       "https://slyder.vercel.app",  // Add your main Vercel domain
-//       "https://*.vercel.app",       // Allow all Vercel preview deployments
-//     ],
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-//     credentials: true,
-//     allowedHeaders: ["Content-Type", "Authorization", "refreshToken"], // Add allowed headers
-//   },
-//   transports: ['polling'], // Explicitly specify transport methods
-//   path: '/socket.io', // Explicitly specify the path to the socket.io server
-//   allowEIO3: true, // Explicitly allow the EIO3 protocol
-//   pingTimeout: 60000, // 60 seconds
-// });
-
-// const io = new Server(server, {
-//   cors: {
-//     origin: [
-//       "http://localhost:3000",
-//       "https://slyder-omega.vercel.app",
-//       "https://slyder-backend.onrender.com"
-//     ],
-//     credentials: true,
-//     methods: ["GET", "POST"]
-//   },
-// });
-
 const io = new Server(server, {
   cors: {
     origin: [
@@ -85,7 +37,6 @@ const userSocketMap = new Map();
 io.on("connection", (socket) => {
   // const userId = socket.handshake.query.userId;
   const userId = socket.user._id.toString();
-  console.log("connectenting ", userId);
   if (!userId) {
     return socket.emit("error", "You are not authorized to access this route");
   }
@@ -104,13 +55,11 @@ io.on("connection", (socket) => {
   socket.on("joinConversations", (conversationIds) => {
     conversationIds.forEach((conversationId) => {
       socket.join(conversationId);
-      console.log("Joined", conversationId);
     });
   });
 
   socket.on("joinConversation", (conversationId) => {
     socket.join(conversationId);
-    console.log("Joined", conversationId);
   });
 
   socket.on("messageSeen", async ({ conversationId }) => {
@@ -190,12 +139,10 @@ io.on("connection", (socket) => {
 
   socket.on("typing", (conversationId) => {
     socket.to(conversationId).emit("typing", conversationId);
-    console.log("typing");
   });
 
   socket.on("stopTyping", (conversationId) => {
     socket.to(conversationId).emit("stopTyping", conversationId);
-    console.log("Stopped typing");
   });
 
   socket.on("newMessage", async ({ message, conversationId, receiverId }) => {
@@ -265,7 +212,6 @@ io.on("connection", (socket) => {
 
   socket.on("leaveConversation", (conversationId) => {
     socket.leave(conversationId);
-    console.log("Left", conversationId);
   });
 
   socket.on("disconnect", () => {
