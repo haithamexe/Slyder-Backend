@@ -239,9 +239,40 @@ io.on("connection", (socket) => {
         conversation.save(),
         notification.save(),
       ]);
+
+      if (conversation.visibleFor.length !== 2) {
+        await Conversation.updateOne(
+          { _id: conversationId },
+          { visibleFor: [socket.user._id, receiverId] }
+        );
+
+        io.to(receiverId).emit("newMessageNoConversation", {
+          _id: conversationId,
+          updatedAt: conversation.updatedAt,
+          lastMessage: {
+            message: message,
+            sender: socket.user._id,
+            receiver: receiverId,
+            visibleFor: [socket.user._id, receiverId],
+            createdAt: newMessageFormatted.createdAt,
+          },
+          user: {
+            _id: socket.user._id,
+            username: socket.user.username,
+            picture: socket.user.picture,
+            firstName: socket.user.firstName,
+            surName: socket.user.surName,
+          },
+        });
+      }
     } catch (error) {
       console.log(error);
     }
+  });
+
+  socket.on("leaveConversation", (conversationId) => {
+    socket.leave(conversationId);
+    console.log("Left", conversationId);
   });
 
   socket.on("disconnect", () => {

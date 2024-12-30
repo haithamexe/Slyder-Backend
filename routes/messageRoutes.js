@@ -13,6 +13,7 @@ const {
 } = require("../controllers/messageController");
 
 router.get("/conversations", protectRoute, getConversations);
+router.get("/conversation/:conversationId", protectRoute, getConversation);
 router.post("/create", protectRoute, createMessage);
 router.post("/conversation", protectRoute, createConversation);
 router.get("/messages/:conversationId/:page", protectRoute, getMessages);
