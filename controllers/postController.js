@@ -7,8 +7,35 @@ const Saved = require("../models/Saved");
 const cloudinary = require("../config/cloudinaryConfig");
 const Notification = require("../models/Notification");
 const { io } = require("../socket");
+const { Redis } = require("@upstash/redis");
 
-exports.createPost = async (req, res) => {
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_URL,
+  token: process.env.UPSTASH_REDIS_TOKEN,
+});
+
+const CACHE_KEY_PREFIX = "user_feed:";
+const CACHE_TTL = 60 * 60;
+
+const invalidateUserFeedCache = async (userId) => {
+  try {
+    const cacheKey = `${CACHE_KEY_PREFIX}${userId}`;
+    await redis.del(cacheKey);
+  } catch (error) {
+    console.error("Error invalidating cache:", error);
+  }
+};
+
+const invalidateUserPostCache = async (postId) => {
+  try {
+    const cacheKey = `post:${postId}`;
+    await redis.del(cacheKey);
+  } catch (error) {
+    console.error("Error invalidating cache:", error);
+  }
+};
+
+const createPost = async (req, res) => {
   try {
     const { content, userId } = req.body;
     let { image } = req.body;
@@ -27,7 +54,18 @@ exports.createPost = async (req, res) => {
       image,
       user: user._id,
     });
+    const userFollowers = await User.findById(userId)
+      .select("followers -_id")
+      .exec();
+
+    userFollowers.followers.map((follower) =>
+      invalidateUserFeedCache(follower)
+    );
+
+    await invalidateUserFeedCache(user._id);
+
     await newPost.save();
+
     return res.status(201).json(newPost);
   } catch (error) {
     console.error(error);
@@ -35,7 +73,7 @@ exports.createPost = async (req, res) => {
   }
 };
 
-// exports.getPosts = async (req, res) => {
+// const getPosts = async (req, res) => {
 //   try {
 //     const posts = await Post.find().select("_id").exec();
 //     if (!posts) {
@@ -48,9 +86,20 @@ exports.createPost = async (req, res) => {
 //   }
 // };
 
-exports.getPosts = async (req, res) => {
+const getPosts = async (req, res) => {
   try {
     const user = req.user;
+
+    const cacheKey = `${CACHE_KEY_PREFIX}${user._id}`;
+
+    const cachedPosts = await redis.get(cacheKey);
+    if (cachedPosts) {
+      const postData =
+        typeof cachedPosts === "string" ? JSON.parse(cachedPosts) : cachedPosts;
+      // console.log("Cache hit", cacheKey, cachedPosts);
+      return res.status(200).json(postData);
+    }
+
     const followingPosts = await Post.find({ user: { $in: user.following } })
       .lean()
       .exec();
@@ -58,6 +107,9 @@ exports.getPosts = async (req, res) => {
     const posts = [...followingPosts, ...userPosts];
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const sendPostsIds = posts.map((post) => post._id);
+
+    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(sendPostsIds));
+
     return res.status(200).json(sendPostsIds);
   } catch (error) {
     console.error(error);
@@ -67,12 +119,23 @@ exports.getPosts = async (req, res) => {
   }
 };
 
-exports.getPost = async (req, res) => {
+const getPost = async (req, res) => {
   try {
     const { postId } = req.params;
     if (!postId) {
       return res.status(400).json({ message: "Please provide an id" });
     }
+
+    const cacheKey = `post:${postId}`;
+
+    const cachedPost = await redis.get(cacheKey);
+    if (cachedPost) {
+      const postData =
+        typeof cachedPost === "string" ? JSON.parse(cachedPost) : cachedPost;
+      // console.log("Cache hit", cacheKey, cachedPost);
+      return res.status(200).json(postData);
+    }
+
     const post = await Post.findById(postId)
       .populate([
         {
@@ -100,6 +163,9 @@ exports.getPost = async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
+
+    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(post));
+
     return res.status(200).json(post);
   } catch (error) {
     console.error(error?.message);
@@ -107,7 +173,7 @@ exports.getPost = async (req, res) => {
   }
 };
 
-exports.updatePost = async (req, res) => {
+const updatePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const { title, description } = req.body;
@@ -129,7 +195,7 @@ exports.updatePost = async (req, res) => {
   }
 };
 
-exports.deletePost = async (req, res) => {
+const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const post = await Post.findById(postId).exec();
@@ -139,9 +205,24 @@ exports.deletePost = async (req, res) => {
     if (post.image) {
       await cloudinary.uploader.destroy(post.image);
     }
+
+    const userFollowers = await User.findById(post.user)
+      .select("followers -_id")
+      .exec();
+
+    console.log(userFollowers);
+
+    userFollowers.followers.map((follower) =>
+      invalidateUserFeedCache(follower)
+    );
+
+    invalidateUserFeedCache(post.user);
+    invalidateUserPostCache(postId);
+
     await Like.deleteMany({ post: post._id }).exec();
     await Comment.deleteMany({ post: post._id }).exec();
     await Post.findByIdAndDelete(post._id);
+
     return res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
     console.error(error);
@@ -149,7 +230,7 @@ exports.deletePost = async (req, res) => {
   }
 };
 
-exports.likePost = async (req, res) => {
+const likePost = async (req, res) => {
   try {
     // const { userId } = req.body;
     const { postId } = req.params;
@@ -175,6 +256,8 @@ exports.likePost = async (req, res) => {
       user: user._id,
     });
     post.likes.push(like._id);
+
+    invalidateUserPostCache(postId);
 
     if (post.user.toString() !== user._id.toString()) {
       const notification = new Notification({
@@ -217,7 +300,7 @@ exports.likePost = async (req, res) => {
   }
 };
 
-exports.unlikePost = async (req, res) => {
+const unlikePost = async (req, res) => {
   try {
     const { postId } = req.params;
     if (!postId) {
@@ -238,6 +321,9 @@ exports.unlikePost = async (req, res) => {
     post.likes = post.likes.filter(
       (like) => like.toString() !== currentLike._id.toString()
     );
+
+    invalidateUserPostCache(postId);
+
     // const notification = await Notification.findOneAndDelete({
     //   receiver: post.user,
     //   sender: user._id,
@@ -245,6 +331,7 @@ exports.unlikePost = async (req, res) => {
     //   post: post._id,
     // }).exec();
     await post.save();
+
     res.status(201).json({ message: "Post unliked successfully" });
   } catch (error) {
     console.error(error);
@@ -252,7 +339,7 @@ exports.unlikePost = async (req, res) => {
   }
 };
 
-exports.commentPost = async (req, res) => {
+const commentPost = async (req, res) => {
   try {
     const { userId, comment } = req.body;
     const { postId } = req.params;
@@ -275,6 +362,9 @@ exports.commentPost = async (req, res) => {
     post.comments.push(newComment._id);
     // await newComment.save();
     // await post.save();
+
+    invalidateUserPostCache(postId);
+
     await Promise.all([newComment.save(), post.save()]);
 
     if (post.user.toString() !== user._id.toString()) {
@@ -303,6 +393,7 @@ exports.commentPost = async (req, res) => {
       };
       io.to(post.user.toString()).emit("newNotification", socketNotification);
     }
+
     return res.status(201).json({ message: "Comment added successfully" });
   } catch (error) {
     console.error(error);
@@ -310,7 +401,7 @@ exports.commentPost = async (req, res) => {
   }
 };
 
-exports.uncommentPost = async (req, res) => {
+const uncommentPost = async (req, res) => {
   try {
     const { commentId } = req.body;
     const { postId } = req.params;
@@ -328,8 +419,12 @@ exports.uncommentPost = async (req, res) => {
     post.comments = post.comments.filter(
       (comment) => comment.toString() !== commentId.toString()
     );
+
+    invalidateUserPostCache(postId);
+
     await comment.remove();
     await post.save();
+
     res.status(200).json({ message: "Comment removed successfully" });
   } catch (error) {
     console.error(error);
@@ -337,7 +432,7 @@ exports.uncommentPost = async (req, res) => {
   }
 };
 
-exports.getPostComments = async (req, res) => {
+const getPostComments = async (req, res) => {
   try {
     const { postId } = req.params;
     if (!postId) {
@@ -359,7 +454,7 @@ exports.getPostComments = async (req, res) => {
   }
 };
 
-exports.getPostLikes = async (req, res) => {
+const getPostLikes = async (req, res) => {
   try {
     const { postId, userId } = req.params;
     if (!userId || !postId) {
@@ -391,7 +486,7 @@ exports.getPostLikes = async (req, res) => {
   }
 };
 
-exports.getPostCommentById = async (req, res) => {
+const getPostCommentById = async (req, res) => {
   try {
     const { commentId } = req.params;
     if (!commentId) {
@@ -420,7 +515,7 @@ exports.getPostCommentById = async (req, res) => {
   }
 };
 
-exports.getHomePosts = async (req, res) => {
+const getHomePosts = async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) {
@@ -447,7 +542,7 @@ exports.getHomePosts = async (req, res) => {
   }
 };
 
-exports.getTrendingPosts = async (req, res) => {
+const getTrendingPosts = async (req, res) => {
   try {
     const { paging } = req.params;
     const posts = await Post.find()
@@ -470,7 +565,7 @@ exports.getTrendingPosts = async (req, res) => {
   }
 };
 
-exports.savePost = async (req, res) => {
+const savePost = async (req, res) => {
   try {
     const { postId, userId } = req.params;
 
@@ -491,6 +586,9 @@ exports.savePost = async (req, res) => {
         user: user._id,
       });
     }
+
+    invalidateUserPostCache(postId);
+
     saved.posts.push(post._id);
     post.savedBy.push(saved._id);
     await Promise.all([saved.save(), post.save()]);
@@ -501,7 +599,7 @@ exports.savePost = async (req, res) => {
   }
 };
 
-exports.unsavePost = async (req, res) => {
+const unsavePost = async (req, res) => {
   try {
     const { postId, userId } = req.params;
     if (!postId || !userId) {
@@ -527,6 +625,8 @@ exports.unsavePost = async (req, res) => {
       (savedBy) => savedBy.toString() !== saved._id.toString()
     );
 
+    invalidateUserPostCache(postId);
+
     await Promise.all([saved.save(), post.save()]);
     return res.status(200).json({ message: "Post unsaved successfully" });
   } catch (error) {
@@ -535,7 +635,7 @@ exports.unsavePost = async (req, res) => {
   }
 };
 
-exports.getPostsByUserName = async (req, res) => {
+const getPostsByUserName = async (req, res) => {
   try {
     const { userName } = req.params;
     if (!userName) {
@@ -554,7 +654,7 @@ exports.getPostsByUserName = async (req, res) => {
   }
 };
 
-exports.getSavedPosts = async (req, res) => {
+const getSavedPosts = async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -579,7 +679,7 @@ exports.getSavedPosts = async (req, res) => {
   }
 };
 
-exports.getPostSavedByPostId = async (req, res) => {
+const getPostSavedByPostId = async (req, res) => {
   try {
     const { postId, userId } = req.params;
     if (!postId || !userId) {
@@ -617,7 +717,7 @@ exports.getPostSavedByPostId = async (req, res) => {
   }
 };
 
-exports.getPostsLikedByUser = async (req, res) => {
+const getPostsLikedByUser = async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) {
@@ -641,7 +741,7 @@ exports.getPostsLikedByUser = async (req, res) => {
   }
 };
 
-// exports.getPostsWithAlgorithm = async (req, res) => {
+// const getPostsWithAlgorithm = async (req, res) => {
 //   try {
 //     const { userId, algo } = req.body;
 //     if (!userId) {
@@ -655,3 +755,28 @@ exports.getPostsLikedByUser = async (req, res) => {
 //     const sugPost = algo.sort((a, b) => b.number - a.number);
 
 //     tobePosts = sugPost.map
+
+module.exports = {
+  createPost,
+  getPosts,
+  getPost,
+  updatePost,
+  deletePost,
+  likePost,
+  unlikePost,
+  commentPost,
+  uncommentPost,
+  getPostComments,
+  getPostLikes,
+  getPostCommentById,
+  getHomePosts,
+  getTrendingPosts,
+  savePost,
+  unsavePost,
+  getPostsByUserName,
+  getSavedPosts,
+  getPostSavedByPostId,
+  getPostsLikedByUser,
+  invalidateUserFeedCache,
+  invalidateUserPostCache,
+};

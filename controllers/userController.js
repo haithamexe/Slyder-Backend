@@ -15,6 +15,7 @@ const {
   validEmail,
 } = require("../helpers/validation");
 const cloudinary = require("../config/cloudinaryConfig");
+const { invalidateUserFeedCache } = require("./postController");
 
 exports.register = async (req, res) => {
   try {
@@ -474,6 +475,14 @@ exports.updateUser = async (req, res) => {
     if (website) {
       user.details.website = website;
     }
+    const userFollowers = await User.findById(user._id)
+      .select("followers -_id")
+      .exec();
+
+    userFollowers.followers.map((follower) =>
+      invalidateUserFeedCache(follower)
+    );
+    await invalidateUserFeedCache(user._id);
 
     await user.save();
     return res
@@ -730,6 +739,9 @@ exports.followUser = async (req, res) => {
       createdAt: notification.createdAt,
     };
 
+    await invalidateUserFeedCache(userId);
+    await invalidateUserFeedCache(followId);
+
     io.to(followId.toString()).emit("newNotification", socketNotification);
     // await user.save();
     // await followUser.save();
@@ -764,6 +776,10 @@ exports.unfollowUser = async (req, res) => {
     console.log(unFollowUser.username, unFollowId, "unfollowed");
     console.log(user.username, userId, "user");
     await Promise.all([user.save(), unFollowUser.save()]);
+
+    await invalidateUserFeedCache(userId);
+    await invalidateUserFeedCache(unFollowId);
+
     return res.status(200).json({ message: "User unfollowed" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
