@@ -67,21 +67,25 @@ io.on("connection", (socket) => {
       const status = await Message.updateMany(
         {
           conversation: conversationId,
-          sender: socket.user._id,
           status: "sent",
+          // sender: socket.user._id,
         },
         { status: "seen" }
       );
 
-      const notification = Notification.updateMany(
+      const notification = await Notification.updateMany(
         {
           conversation: conversationId,
           type: "message",
           read: false,
-          sender: socket.user._id,
+          // sender: socket.user._id,
         },
         { read: true }
       );
+
+      console.log("message seen", conversationId);
+      console.log("status", status);
+      console.log("notification", notification);
 
       if (!notification || !status) {
         console.log("message seen error", conversationId, messageId);
@@ -93,35 +97,35 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("messageSeenWithId", async ({ conversationId, messageId }) => {
-    try {
-      const status = await Message.updateOne(
-        {
-          conversation: conversationId,
-          _id: messageId,
-          status: "sent",
-          // sender: socket.user._id,
-        },
-        { status: "seen" }
-      );
+  // socket.on("messageSeenWithId", async ({ conversationId, messageId }) => {
+  //   try {
+  //     const status = await Message.updateOne(
+  //       {
+  //         conversation: conversationId,
+  //         _id: messageId,
+  //         status: "sent",
+  //         sender: socket.user._id,
+  //       },
+  //       { status: "seen" }
+  //     );
 
-      const notification = await Notification.updateOne(
-        {
-          conversation: conversationId,
-          type: "message",
-          read: false,
-          // sender: socket.user._id,
-        },
-        { read: true }
-      );
+  //     const notification = await Notification.updateOne(
+  //       {
+  //         conversation: conversationId,
+  //         type: "message",
+  //         read: false,
+  //         sender: socket.user._id,
+  //       },
+  //       { read: true }
+  //     );
 
-      if (!notification || !status) {
-        console.log("message seen error", conversationId, messageId);
-      }
-    } catch (error) {
-      console.log("message seen error", error.message);
-    }
-  });
+  //     if (!notification || !status) {
+  //       console.log("message seen error", conversationId, messageId);
+  //     }
+  //   } catch (error) {
+  //     console.log("message seen error", error.message);
+  //   }
+  // });
 
   socket.on("typing", (conversationId) => {
     socket.to(conversationId).emit("typing", conversationId);

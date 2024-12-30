@@ -6,8 +6,8 @@ const protectRoute = async (req, res, next) => {
     // console.log("Token from cookie", req.cookies.refreshToken);
     let token;
     // console.log(req);
-    if (req?.cookies?.refreshToken) {
-      token = req?.cookies?.refreshToken;
+    if (req.cookies.refreshToken) {
+      token = req.cookies.refreshToken;
       // console.log("Token from cookie", token);
       // console.log("Token from cookie", req.cookies);
     }
