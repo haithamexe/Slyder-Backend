@@ -125,6 +125,7 @@ exports.activateAccount = async (req, res) => {
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
       partitioned: true, // Add this for iOS
+      domain: process.env.BASE_URL,
     });
 
     const accessToken = jwt.sign(
@@ -202,6 +203,9 @@ exports.login = async (req, res) => {
       secure: true,
       sameSite: "None",
       path: "/",
+      partitioned: true,
+      domain: process.env.BASE_URL,
+      maxAge: 365 * 24 * 60 * 60 * 1000,
     });
 
     const accessToken = jwt.sign(
@@ -316,8 +320,10 @@ exports.logout = async (req, res) => {
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      sameSite: "None",
       path: "/",
+      partitioned: true,
+      domain: process.env.BASE_URL,
     });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
