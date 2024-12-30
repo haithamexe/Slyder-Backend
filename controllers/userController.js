@@ -322,8 +322,6 @@ exports.logout = async (req, res) => {
       secure: true,
       sameSite: "None",
       path: "/",
-      partitioned: true,
-      domain: process.env.BASE_URL,
     });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
