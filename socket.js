@@ -8,6 +8,7 @@ const Message = require("./models/Message");
 const Conversation = require("./models/Conversation");
 const Notification = require("./models/Notification");
 const cors = require("cors");
+const cron = require("node-cron");
 
 const app = express();
 const server = http.createServer(app);
@@ -114,27 +115,6 @@ io.on("connection", (socket) => {
 
   socket.on("messageSeen", async ({ conversationId }) => {
     try {
-      // console.log("message seen", conversationId, socket.user._id);
-
-      // const status = await Message.updateMany(
-      //   {
-      //     conversation: conversationId,
-      //     sender: socket.user._id,
-      //     status: "sent",
-      //   },
-      //   { status: "seen" }
-      // );
-
-      // const notification = await Notification.updateMany(
-      //   {
-      //     conversation: conversationId,
-      //     type: "message",
-      //     read: false,
-      //     sender: socket.user._id,
-      //   },
-      //   { read: true }
-      // );
-
       const [status, notification] = await Promise.all([
         Message.updateMany(
           {
@@ -159,6 +139,19 @@ io.on("connection", (socket) => {
         console.log("message seen error", conversationId, messageId);
       } else {
         socket.to(conversationId).emit("messageSeen", { conversationId });
+        // const dateNow = new Date(Date.now());
+        // const hours = dateNow.getHours();
+        // if (hours % 12 === 0) {
+        //   const currentDate = new Date(Date.now() - 1000 * 60 * 60 * 3);
+
+        //   await Notification.deleteMany({
+        //     conversation: conversationId,
+        //     type: "message",
+        //     read: true,
+        //     sender: socket.user._id,
+        //     createdAt: { $lt: currentDate },
+        //   });
+        // }
       }
     } catch (error) {
       console.log("message seen error", error.message);

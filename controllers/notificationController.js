@@ -5,6 +5,7 @@ const { io } = require("../socket");
 const User = mongoose.model("User");
 const Message = mongoose.model("Message");
 const Conversation = mongoose.model("Conversation");
+const cron = require("node-cron");
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -82,6 +83,19 @@ exports.markAsRead = async (req, res) => {
     if (!notifications) {
       return res.status(404).json({ message: "No unread notifications found" });
     }
+
+    // const dateNow = new Date(Date.now());
+    // const hours = dateNow.getHours();
+
+    // if (hours % 12 === 0) {
+    //   const currentDate = new Date(Date.now() - 1000 * 60 * 60 * 3);
+    //   await Notification.deleteMany({
+    //     receiver: user._id,
+    //     read: true,
+    //     type: { $ne: "message" },
+    //     createdAt: { $lt: currentDate },
+    //   }).exec();
+    // }
 
     // notifications should be deleted
 

@@ -14,6 +14,7 @@ const http = require("http");
 const cloudinary = "./config/cloudinaryConfig";
 const bodyParser = require("body-parser");
 const { app, server } = require("./socket");
+const setupCronJobs = require("./helpers/cronJobs");
 
 // const errorHandler = require("./middleware/errorHandler");
 // const verifyJWT = require("./middleware/verifyJWT");
@@ -30,6 +31,13 @@ app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(express.json());
 
+//need to look around for the correct path
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+
+setupCronJobs();
+
+// app.use(verifyJWT);
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "api-info.html"));
 });
