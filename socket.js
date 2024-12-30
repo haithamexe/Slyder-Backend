@@ -64,43 +64,29 @@ io.on("connection", (socket) => {
 
   socket.on("messageSeen", async ({ conversationId }) => {
     try {
-      const [status, notification] = await Promise.all([
-        Message.updateMany(
-          {
-            conversation: conversationId,
-            sender: socket.user._id,
-            status: "sent",
-          },
-          { status: "seen" }
-        ),
-        Notification.updateMany(
-          {
-            conversation: conversationId,
-            type: "message",
-            read: false,
-            sender: socket.user._id,
-          },
-          { read: true }
-        ),
-      ]);
+      const status = await Message.updateMany(
+        {
+          conversation: conversationId,
+          sender: socket.user._id,
+          status: "sent",
+        },
+        { status: "seen" }
+      );
+
+      const notification = Notification.updateMany(
+        {
+          conversation: conversationId,
+          type: "message",
+          read: false,
+          sender: socket.user._id,
+        },
+        { read: true }
+      );
 
       if (!notification || !status) {
         console.log("message seen error", conversationId, messageId);
       } else {
         socket.to(conversationId).emit("messageSeen", { conversationId });
-        // const dateNow = new Date(Date.now());
-        // const hours = dateNow.getHours();
-        // if (hours % 12 === 0) {
-        //   const currentDate = new Date(Date.now() - 1000 * 60 * 60 * 3);
-
-        //   await Notification.deleteMany({
-        //     conversation: conversationId,
-        //     type: "message",
-        //     read: true,
-        //     sender: socket.user._id,
-        //     createdAt: { $lt: currentDate },
-        //   });
-        // }
       }
     } catch (error) {
       console.log("message seen error", error.message);
