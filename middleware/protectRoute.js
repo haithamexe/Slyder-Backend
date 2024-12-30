@@ -24,7 +24,11 @@ const protectRoute = async (req, res, next) => {
     }
     const user = await User.findById(decoded.id).exec();
     if (!user) {
-      res.clearCookie("refreshToken", { path: "/" });
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+      });
       return res.status(401).json({
         message: "You are not authorized to access this route no user",
       });
