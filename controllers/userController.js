@@ -121,8 +121,9 @@ exports.activateAccount = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      maxAge: 15 * 60 * 1000, // 15 minutes
-      sameSite: "Lax",
+      sameSite: "None",
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/",
     });
 
     const accessToken = jwt.sign(
@@ -198,8 +199,9 @@ exports.login = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      maxAge: 15 * 60 * 1000, // 15 minutes
-      sameSite: "Lax",
+      sameSite: "None",
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      path: "/",
     });
 
     const accessToken = jwt.sign(
@@ -314,8 +316,8 @@ exports.logout = async (req, res) => {
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: true,
-      maxAge: 15 * 60 * 1000, // 15 minutes
-      sameSite: "Lax",
+      sameSite: "none",
+      path: "/",
     });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
