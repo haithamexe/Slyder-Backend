@@ -68,7 +68,6 @@ io.on("connection", (socket) => {
         {
           conversation: conversationId,
           status: "sent",
-          // sender: socket.user._id,
         },
         { status: "seen" }
       );
@@ -78,7 +77,6 @@ io.on("connection", (socket) => {
           conversation: conversationId,
           type: "message",
           read: false,
-          // sender: socket.user._id,
         },
         { read: true }
       );
