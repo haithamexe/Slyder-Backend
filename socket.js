@@ -7,12 +7,27 @@ const User = require("./models/User");
 const Message = require("./models/Message");
 const Conversation = require("./models/Conversation");
 const Notification = require("./models/Notification");
+const cors = require("cors");
+const cron = require("node-cron");
 
 const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: corsOptions,
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "https://slyder-omega.vercel.app",
+      "https://slyder.vercel.app",
+      "https://slyder-backend.onrender.com",
+    ],
+    credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  allowEIO3: true, // Enable Engine.IO v3 compatibility
 });
 
 io.use(protectSocket);
@@ -22,7 +37,6 @@ const userSocketMap = new Map();
 io.on("connection", (socket) => {
   // const userId = socket.handshake.query.userId;
   const userId = socket.user._id.toString();
-  console.log("connectenting ", userId);
   if (!userId) {
     return socket.emit("error", "You are not authorized to access this route");
   }
@@ -41,23 +55,18 @@ io.on("connection", (socket) => {
   socket.on("joinConversations", (conversationIds) => {
     conversationIds.forEach((conversationId) => {
       socket.join(conversationId);
-      console.log("Joined", conversationId);
     });
   });
 
   socket.on("joinConversation", (conversationId) => {
     socket.join(conversationId);
-    console.log("Joined", conversationId);
   });
 
   socket.on("messageSeen", async ({ conversationId }) => {
     try {
-      // console.log("message seen", conversationId, socket.user._id);
-
       const status = await Message.updateMany(
         {
           conversation: conversationId,
-          sender: socket.user._id,
           status: "sent",
         },
         { status: "seen" }
@@ -68,10 +77,13 @@ io.on("connection", (socket) => {
           conversation: conversationId,
           type: "message",
           read: false,
-          sender: socket.user._id,
         },
         { read: true }
       );
+
+      console.log("message seen", conversationId);
+      console.log("status", status);
+      console.log("notification", notification);
 
       if (!notification || !status) {
         console.log("message seen error", conversationId, messageId);
@@ -83,43 +95,42 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("messageSeenWithId", async ({ conversationId, messageId }) => {
-    try {
-      const status = await Message.updateOne(
-        {
-          conversation: conversationId,
-          _id: messageId,
-          status: "sent",
-        },
-        { status: "seen" }
-      );
+  // socket.on("messageSeenWithId", async ({ conversationId, messageId }) => {
+  //   try {
+  //     const status = await Message.updateOne(
+  //       {
+  //         conversation: conversationId,
+  //         _id: messageId,
+  //         status: "sent",
+  //         sender: socket.user._id,
+  //       },
+  //       { status: "seen" }
+  //     );
 
-      const notification = await Notification.updateOne(
-        {
-          conversation: conversationId,
-          type: "message",
-          read: false,
-          sender: socket.user._id,
-        },
-        { read: true }
-      );
+  //     const notification = await Notification.updateOne(
+  //       {
+  //         conversation: conversationId,
+  //         type: "message",
+  //         read: false,
+  //         sender: socket.user._id,
+  //       },
+  //       { read: true }
+  //     );
 
-      if (!notification || !status) {
-        console.log("message seen error", conversationId, messageId);
-      }
-    } catch (error) {
-      console.log("message seen error", error.message);
-    }
-  });
+  //     if (!notification || !status) {
+  //       console.log("message seen error", conversationId, messageId);
+  //     }
+  //   } catch (error) {
+  //     console.log("message seen error", error.message);
+  //   }
+  // });
 
   socket.on("typing", (conversationId) => {
     socket.to(conversationId).emit("typing", conversationId);
-    console.log("typing");
   });
 
   socket.on("stopTyping", (conversationId) => {
     socket.to(conversationId).emit("stopTyping", conversationId);
-    console.log("Stopped typing");
   });
 
   socket.on("newMessage", async ({ message, conversationId, receiverId }) => {
@@ -129,6 +140,7 @@ io.on("connection", (socket) => {
         message: message,
         sender: socket.user._id,
         receiver: receiverId,
+        visibleFor: [socket.user._id, receiverId],
       });
 
       const newMessageFormatted = {
@@ -155,9 +167,39 @@ io.on("connection", (socket) => {
         conversation.save(),
         notification.save(),
       ]);
+
+      if (conversation.visibleFor.length !== 2) {
+        await Conversation.updateOne(
+          { _id: conversationId },
+          { visibleFor: [socket.user._id, receiverId] }
+        );
+
+        io.to(receiverId).emit("newMessageNoConversation", {
+          _id: conversationId,
+          updatedAt: conversation.updatedAt,
+          lastMessage: {
+            message: message,
+            sender: socket.user._id,
+            receiver: receiverId,
+            visibleFor: [socket.user._id, receiverId],
+            createdAt: newMessageFormatted.createdAt,
+          },
+          user: {
+            _id: socket.user._id,
+            username: socket.user.username,
+            picture: socket.user.picture,
+            firstName: socket.user.firstName,
+            surName: socket.user.surName,
+          },
+        });
+      }
     } catch (error) {
       console.log(error);
     }
+  });
+
+  socket.on("leaveConversation", (conversationId) => {
+    socket.leave(conversationId);
   });
 
   socket.on("disconnect", () => {

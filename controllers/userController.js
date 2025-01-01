@@ -15,6 +15,7 @@ const {
   validEmail,
 } = require("../helpers/validation");
 const cloudinary = require("../config/cloudinaryConfig");
+const { invalidateUserFeedCache } = require("./postController");
 
 exports.register = async (req, res) => {
   try {
@@ -113,64 +114,21 @@ exports.activateAccount = async (req, res) => {
       { id: user._id.toString() },
       process.env.JWT_REFRESH_SECRET,
       {
-        expiresIn: "1y",
+        expiresIn: "365d",
       }
     );
 
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/user/",
-    // });
-
-    // res.cookie("refreshTokenMessage", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/message/",
-    // });
-
-    // res.cookie("refreshTokenNotes", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/note/",
-    // });
-
-    // res.cookie("refreshTokenPost", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/post/",
-    // });
-
-    // res.cookie("refreshTokenNotifications", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/notification/",
-    // });
-
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "none",
       secure: true,
+      sameSite: "None",
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
     });
 
     const accessToken = jwt.sign(
       { id: user._id.toString() },
-      process.env.JWT_ACCESS_SECRET,
-      {
-        expiresIn: "15m",
-      }
+      process.env.JWT_ACCESS_SECRET
     );
 
     return res.status(200).json({
@@ -234,54 +192,14 @@ exports.login = async (req, res) => {
       { id: user._id.toString() },
       process.env.JWT_REFRESH_SECRET,
       {
-        expiresIn: "1y",
+        expiresIn: "365d",
       }
     );
 
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/user/",
-    // });
-
-    // res.cookie("refreshTokenMessage", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/message/",
-    // });
-
-    // res.cookie("refreshTokenNote", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/note/",
-    // });
-
-    // res.cookie("refreshTokenPost", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/post/",
-    // });
-
-    // res.cookie("refreshTokenNotifications", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "none",
-    //   secure: true,
-    //   maxAge: 365 * 24 * 60 * 60 * 1000,
-    //   path: "/api/notification/",
-    // });
-
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "none",
       secure: true,
+      sameSite: "None",
       maxAge: 365 * 24 * 60 * 60 * 1000,
       path: "/",
     });
@@ -306,8 +224,8 @@ exports.login = async (req, res) => {
 exports.refresh = async (req, res) => {
   try {
     // console.log(req.cookies);
-    const token = req.cookies.refreshToken;
-    if (!token) {
+    const token = req?.cookies?.refreshToken;
+    if (!token || token === "null") {
       return res.status(401).json({ message: "Unauthorized" + req.cookies });
     }
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
@@ -326,14 +244,14 @@ exports.refresh = async (req, res) => {
 
     return res.status(200).json({ accessToken });
   } catch (err) {
-    return res.status(500).json({ message: err });
+    return res.status(500).json({ message: err.message });
   }
 };
 
 exports.auth = async (req, res) => {
   try {
-    const accessToken = req.body.accessToken;
-    const refreshToken = req.cookies.refreshToken;
+    const accessToken = req?.body?.accessToken;
+    const refreshToken = req?.cookies?.refreshToken;
 
     if (!accessToken || !refreshToken) {
       return res.status(404).json({ message: "Unauthorized no Tokens" });
@@ -395,7 +313,12 @@ exports.logout = async (req, res) => {
     // res.clearCookie("refreshTokenMessage", { path: "/api/message/" });
     // res.clearCookie("refreshTokenNote", { path: "/api/note/" });
     // res.clearCookie("refreshTokenPost", { path: "/api/post/" });
-    res.clearCookie("refreshToken", { path: "/" });
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
     return res.status(200).json({ message: "Logged out" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -552,6 +475,14 @@ exports.updateUser = async (req, res) => {
     if (website) {
       user.details.website = website;
     }
+    const userFollowers = await User.findById(user._id)
+      .select("followers -_id")
+      .exec();
+
+    userFollowers.followers.map((follower) =>
+      invalidateUserFeedCache(follower)
+    );
+    await invalidateUserFeedCache(user._id);
 
     await user.save();
     return res
@@ -808,6 +739,9 @@ exports.followUser = async (req, res) => {
       createdAt: notification.createdAt,
     };
 
+    await invalidateUserFeedCache(userId);
+    await invalidateUserFeedCache(followId);
+
     io.to(followId.toString()).emit("newNotification", socketNotification);
     // await user.save();
     // await followUser.save();
@@ -842,6 +776,10 @@ exports.unfollowUser = async (req, res) => {
     console.log(unFollowUser.username, unFollowId, "unfollowed");
     console.log(user.username, userId, "user");
     await Promise.all([user.save(), unFollowUser.save()]);
+
+    await invalidateUserFeedCache(userId);
+    await invalidateUserFeedCache(unFollowId);
+
     return res.status(200).json({ message: "User unfollowed" });
   } catch (err) {
     return res.status(500).json({ message: err.message });

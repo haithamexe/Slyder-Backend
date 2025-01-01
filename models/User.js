@@ -50,7 +50,7 @@ const userSchema = mongoose.Schema(
     gender: {
       type: String,
       required: true,
-      enum: ["male", "female", "Other"],
+      enum: ["male", "female", "other"],
     },
     pronoun: {
       type: String,
@@ -71,16 +71,18 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    following: {
-      type: [ObjectId],
-      ref: "User",
-      default: [],
-    },
-    followers: {
-      type: [ObjectId],
-      ref: "User",
-      default: [],
-    },
+    following: [
+      {
+        type: ObjectId,
+        ref: "User",
+      },
+    ],
+    followers: [
+      {
+        type: ObjectId,
+        ref: "User",
+      },
+    ],
     contacts: {
       type: Array,
       default: [],

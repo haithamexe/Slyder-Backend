@@ -1,21 +1,21 @@
 const allowedOrigins = [
-  "http://192.168.1.108:3000",
-  "http://192.168.1.1:3000",
-  "http://192.168.1.111:3000",
   "http://localhost:3000",
+  "https://slyder-backend.onrender.com",
+  "https://slyder-omega.vercel.app",
 ];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, origin); // Return the specific origin
     } else {
-      callback(new Error("cors not working properly"), false);
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  optionsSuccessStatus: 200,
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 module.exports = corsOptions;

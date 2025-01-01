@@ -14,6 +14,7 @@ const http = require("http");
 const cloudinary = "./config/cloudinaryConfig";
 const bodyParser = require("body-parser");
 const { app, server } = require("./socket");
+const setupCronJobs = require("./helpers/cronJobs");
 
 // const errorHandler = require("./middleware/errorHandler");
 // const verifyJWT = require("./middleware/verifyJWT");
@@ -22,14 +23,21 @@ const { app, server } = require("./socket");
 
 const PORT = process.env.PORT || 8000;
 
-dbConnect();
-// const app = express();
-app.use(cookieParser());
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+dbConnect();
+app.use(cookieParser());
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(express.json());
 
+//need to look around for the correct path
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+
+setupCronJobs();
+
+// app.use(verifyJWT);
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "api-info.html"));
 });
@@ -38,14 +46,10 @@ app.use("/api/post", require("./routes/postRoutes"));
 app.use("/api/message", require("./routes/messageRoutes"));
 app.use("/api/note", require("./routes/noteRoutes"));
 app.use("/api/notification", require("./routes/notificationRoutes"));
-// app.use("/api/notification", require("./routes/notificationRoutes"));
-// app.use("/api/room", require("./routes/roomRoutes"));
 app.use("*", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "404.html"));
 });
 
-app.use(logger);
-app.use(errorHandler);
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     console.error("Bad JSON");
@@ -54,6 +58,14 @@ app.use((err, req, res, next) => {
     console.error("Request entity too large");
   }
   next();
+});
+
+mongoose.connection.once("open", () => {
+  console.log("connected to database");
+  server.listen(PORT, () => console.log("running on port " + PORT));
+});
+mongoose.connection.on("error", () => {
+  console.log("server not running, database error", err);
 });
 
 // const server = http.createServer(app);
@@ -70,13 +82,3 @@ app.use((err, req, res, next) => {
 //     console.log("socket disconnected");
 //   });
 // });
-
-mongoose.connection.once("open", () => {
-  console.log("connected to database");
-  if (process.env.NODE_ENV !== "production") {
-    server.listen(PORT, () => console.log("running on port" + PORT));
-  }
-});
-mongoose.connection.on("error", () => {
-  console.log("server not running, database error", err);
-});

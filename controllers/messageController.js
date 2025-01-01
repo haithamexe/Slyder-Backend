@@ -27,19 +27,14 @@ exports.createConversation = async (req, res) => {
     }
     const conversation = await Conversation.findOne({
       participants: { $all: [sender._id.toString(), receiver._id.toString()] },
-    })
-      .select("-messages")
-      .populate({
-        path: "participants",
-        select: ["username", "picture", "firstName", "surName"],
-        match: { _id: { $ne: sender._id } },
-      })
-      .exec();
+    }).select("-messages");
 
     if (conversation) {
       if (!conversation.visibleFor.includes(sender._id)) {
         conversation.visibleFor.push(sender._id);
+        await conversation.save();
       }
+
       const lastMessage = await Message.findOne({
         conversation: conversation._id,
       })
@@ -47,10 +42,15 @@ exports.createConversation = async (req, res) => {
         .exec();
 
       io.to(sender._id.toString()).emit("newConversation", {
-        ...conversation,
+        _id: conversation._id,
         lastMessage: {
           message: lastMessage?.message,
           createdAt: lastMessage?.createdAt,
+          receiver: lastMessage?.receiver,
+          sender: lastMessage?.sender,
+          visibleFor: lastMessage?.visibleFor,
+          status: lastMessage?.status,
+          _id: lastMessage?._id,
         },
         user: {
           _id: receiver._id,
@@ -61,8 +61,7 @@ exports.createConversation = async (req, res) => {
         },
       });
 
-      await conversation.save();
-      return res.status(200).json(conversation);
+      return res.status(200).json();
     }
 
     const newConversation = new Conversation({
@@ -73,7 +72,8 @@ exports.createConversation = async (req, res) => {
     await newConversation.save();
 
     io.to(receiver._id.toString()).emit("newConversation", {
-      ...newConversation._doc,
+      _id: newConversation._id,
+      updatedAt: newConversation.updatedAt,
       user: {
         _id: sender._id,
         username: sender.username,
@@ -83,7 +83,8 @@ exports.createConversation = async (req, res) => {
       },
     });
     io.to(sender._id.toString()).emit("newConversation", {
-      ...newConversation._doc,
+      _id: newConversation._id,
+      updatedAt: newConversation.updatedAt,
       user: {
         _id: receiver._id,
         username: receiver.username,
@@ -113,19 +114,22 @@ exports.createMessage = async (req, res) => {
 
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
-      conversation = new Conversation({
-        participants: [sender._id, receiver._id],
-      });
-      // await conversation.save();
+      // conversation = new Conversation({
+      //   participants: [sender._id, receiver._id],
+      // });
+
+      return res.status(404).json({ message: "Conversation not found" });
     }
+
     const receiver = conversation.participants.find(
       (participant) => participant.toString() !== sender._id.toString()
     );
     const newMessage = new Message({
       conversation: conversation._id,
       sender: sender._id,
-      receiver: receiver,
+      receiver: receiver._id,
       message: message,
+      visibleFor: [sender._id, receiver._id],
     });
 
     io.to(receiver.toString()).emit("newMessage", {
@@ -171,11 +175,12 @@ exports.getConversation = async (req, res) => {
       })
       .select("-messages");
 
-    const messages = await Message.findOne({
+    const lastMessage = await Message.findOne({
       conversation: conversationId,
     })
       .sort({ createdAt: -1 })
       .populate("receiver");
+
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
@@ -194,10 +199,17 @@ exports.getConversation = async (req, res) => {
         surName: receiver.surName,
       },
       lastMessage: {
-        message: lastMessageDecrypted,
-        createdAt: messages[messages?.length - 1]?.createdAt,
+        message: lastMessage?.message,
+        createdAt: lastMessage?.createdAt,
+        receiver: lastMessage?.receiver,
+        sender: lastMessage?.sender,
+        visibleFor: lastMessage?.visibleFor,
+        status: lastMessage?.status,
+        _id: lastMessage?._id,
       },
     };
+
+    io.to(sender._id.toString()).emit("newConversation", conversationData);
     console.log("conversationData", conversationData);
     return res.status(200).json(conversationData);
   } catch (err) {
@@ -210,48 +222,6 @@ exports.getConversation = async (req, res) => {
 exports.getConversations = async (req, res) => {
   try {
     const user = req.user;
-
-    // const conversations = await Conversation.find({
-    //   participants: { $in: [user._id] },
-    //   visibleFor: { $in: [user._id] },
-    // })
-    //   .populate({
-    //     path: "participants",
-    //     select: ["username", "picture", "firstName", "surName"],
-    //     match: { _id: { $ne: user._id } },
-    //   })
-    //   .populate({
-    //     path: "messages",
-    //     select: ["message", "status", "createdAt"],
-    //     options: { sort: { createdAt: -1 }, limit: 1 },
-    //   })
-    //   .select("-messages")
-    //   .sort({ updatedAt: -1 });
-
-    // if (!conversations) {
-    //   return res.status(404).json({ message: "Conversations not found" });
-    // }
-
-    // const updatedConversations = conversations.map((conversation) => {
-    //   const lastMessage = conversation.messages[0];
-    //   const updatedConversation = {
-    //     ...conversation._doc,
-    //     lastMessage: {
-    //       _id: lastMessage?._id,
-    //       message: lastMessage?.message,
-    //       createdAt: lastMessage?.createdAt,
-    //       status: lastMessage?.status,
-    //     },
-    //     user: {
-    //       _id: conversation.participants[0]?._id,
-    //       username: conversation.participants[0]?.username,
-    //       picture: conversation.participants[0]?.picture,
-    //       firstName: conversation.participants[0]?.firstName,
-    //       surName: conversation.participants[0]?.surName,
-    //     },
-    //   };
-    //   return updatedConversation;
-    // });
 
     const conversations = await Conversation.aggregate([
       // Match conversations where the user is a participant and the conversation is visible to them
@@ -299,6 +269,7 @@ exports.getConversations = async (req, res) => {
                 createdAt: 1,
                 sender: 1,
                 receiver: 1,
+                visibleFor: 1,
               },
             },
           ],
@@ -356,6 +327,7 @@ exports.getMessages = async (req, res) => {
 
     const messages = await Message.find({
       conversation: conversationId,
+      visibleFor: { $in: [user._id] },
     })
       .sort({
         createdAt: -1,
@@ -424,19 +396,24 @@ exports.deleteConversation = async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    await conversation.visibleFor.pull(user._id);
+    if (conversation.visibleFor.length !== 1) {
+      await conversation.visibleFor.pull(user._id);
+      await Message.updateMany(
+        {
+          conversation: conversation._id,
+          visibleFor: { $in: [user._id] },
+        },
+        {
+          $pull: { visibleFor: user._id },
+        }
+      );
+      await conversation.save();
+    } else {
+      await Message.deleteMany({ conversation: conversation._id });
+      await Conversation.deleteOne({ _id: conversation._id });
+    }
 
-    await Message.updateMany(
-      {
-        conversation: conversation._id,
-        visibleFor: { $ne: user._id },
-      },
-      {
-        $pull: { visibleFor: user._id },
-      }
-    );
-
-    await conversation.save();
+    return res.status(200).json({ message: "deleted" });
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
