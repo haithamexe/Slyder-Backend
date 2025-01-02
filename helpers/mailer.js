@@ -43,3 +43,29 @@ exports.sendEmail = (email, name, token) => {
     }
   });
 };
+
+exports.sendReset = (email, name, token) => {
+  const mailOptions = {
+    from: "slyderappmail@gmail.com",
+    to: email,
+    subject: "Password reset",
+    html:
+      "<h1>Hello, " +
+      name +
+      ", Click on the link below to reset your password</h1><br><a target='_blank' href='" +
+      process.env.BASE_URL +
+      "/reset/" +
+      token +
+      "'>Click here to reset</a>",
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log("Error in sending email  " + error);
+      return true;
+    } else {
+      console.log("Email sent: " + info.response);
+      return false;
+    }
+  });
+};

@@ -555,7 +555,6 @@ const getTrendingPosts = async (req, res) => {
 
     posts.sort((a, b) => b.likes.length - a.likes.length);
     const postsId = posts.map((post) => post?._id);
-    console.log(postsId);
     return res.status(200).json(postsId);
   } catch (error) {
     console.error(error.message, "error");
