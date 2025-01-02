@@ -8,7 +8,7 @@ const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Notification = require("../models/Notification");
 const { io } = require("../socket");
-const { sendEmail } = require("../helpers/mailer");
+const { sendEmail, sendReset } = require("../helpers/mailer");
 const {
   registerValidation,
   usernameValidation,
@@ -606,8 +606,7 @@ exports.forgotPassword = async (req, res) => {
         expiresIn: "30m",
       }
     );
-    const url = resetToken;
-    sendEmail(user.email, user.firstName, url);
+    sendReset(user.email, user.firstName, resetToken);
     return res.status(200).json({
       message: "A reset link has been sent to your email",
     });
@@ -619,20 +618,42 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
-    if (!token || !password) {
+    // console.log(token, user?._id, password);
+    const userId = req.cookies.refreshToken;
+
+    if (!password) {
+      return res.status(400).json({ message: "Please provide a password" });
+    }
+
+    if (userId) {
+      const decoded = jwt.verify(userId, process.env.JWT_REFRESH_SECRET);
+      const hashedPassword = await bcrypt.hash(
+        password,
+        parseInt(process.env.SALT_ROUNDS)
+      );
+      const user = await User.findById(decoded.id).exec();
+      user.password = hashedPassword;
+      await user.save();
+
+      return res.status(200).json({ message: "Password updated" });
+    }
+
+    if (!token) {
       return res.status(400).json({ message: "Please provide a token" });
     }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET_RESET);
     if (!decoded) {
       return res.status(400).json({ message: "Invalid token" });
     }
-    const user = await User.findById(decoded.id).exec();
-    if (!user) {
+    const userDecoded = await User.findById(decoded.id);
+    if (!userDecoded) {
       return res.status(404).json({ message: "User not found" });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    user.password = hashedPassword;
-    await user.save();
+    userDecoded.password = hashedPassword;
+    await userDecoded.save();
     return res.status(200).json({ message: "Password updated" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
