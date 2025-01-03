@@ -19,6 +19,7 @@ const io = new Server(server, {
       "http://localhost:3000",
       "https://slyder-omega.vercel.app",
       "https://slyder.vercel.app",
+      "https://slyder-backend.vercel.app",
       "https://slyder-backend.onrender.com",
     ],
     credentials: true,

@@ -2,6 +2,8 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://slyder-backend.onrender.com",
   "https://slyder-omega.vercel.app",
+  "https://slyder-backend.vercel.app",
+  "https://slyder.vercel.app",
 ];
 
 const corsOptions = {
