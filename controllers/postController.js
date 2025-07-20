@@ -7,15 +7,15 @@ const Saved = require("../models/Saved");
 const cloudinary = require("../config/cloudinaryConfig");
 const Notification = require("../models/Notification");
 const { io } = require("../socket");
-const { Redis } = require("@upstash/redis");
+// const { Redis } = require("@upstash/redis");
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL,
-  token: process.env.UPSTASH_REDIS_TOKEN,
-});
+// const redis = new Redis({
+//   url: process.env.UPSTASH_REDIS_URL,
+//   token: process.env.UPSTASH_REDIS_TOKEN,
+// });
 
-const CACHE_KEY_PREFIX = "user_feed:";
-const CACHE_TTL = 60 * 60;
+// const CACHE_KEY_PREFIX = "user_feed:";
+// const CACHE_TTL = 60 * 60;
 
 // const invalidateUserFeedCache = async (userId) => {
 //   try {
