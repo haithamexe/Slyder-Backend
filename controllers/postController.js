@@ -7,33 +7,33 @@ const Saved = require("../models/Saved");
 const cloudinary = require("../config/cloudinaryConfig");
 const Notification = require("../models/Notification");
 const { io } = require("../socket");
-const { Redis } = require("@upstash/redis");
+// const { Redis } = require("@upstash/redis");
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL,
-  token: process.env.UPSTASH_REDIS_TOKEN,
-});
+// const redis = new Redis({
+//   url: process.env.UPSTASH_REDIS_URL,
+//   token: process.env.UPSTASH_REDIS_TOKEN,
+// });
 
-const CACHE_KEY_PREFIX = "user_feed:";
-const CACHE_TTL = 60 * 60;
+// const CACHE_KEY_PREFIX = "user_feed:";
+// const CACHE_TTL = 60 * 60;
 
-const invalidateUserFeedCache = async (userId) => {
-  try {
-    const cacheKey = `${CACHE_KEY_PREFIX}${userId}`;
-    await redis.del(cacheKey);
-  } catch (error) {
-    console.error("Error invalidating cache:", error);
-  }
-};
+// const invalidateUserFeedCache = async (userId) => {
+//   try {
+//     const cacheKey = `${CACHE_KEY_PREFIX}${userId}`;
+//     await redis.del(cacheKey);
+//   } catch (error) {
+//     console.error("Error invalidating cache:", error);
+//   }
+// };
 
-const invalidateUserPostCache = async (postId) => {
-  try {
-    const cacheKey = `post:${postId}`;
-    await redis.del(cacheKey);
-  } catch (error) {
-    console.error("Error invalidating cache:", error);
-  }
-};
+// const invalidateUserPostCache = async (postId) => {
+//   try {
+//     const cacheKey = `post:${postId}`;
+//     await redis.del(cacheKey);
+//   } catch (error) {
+//     console.error("Error invalidating cache:", error);
+//   }
+// };
 
 const createPost = async (req, res) => {
   try {
@@ -54,15 +54,16 @@ const createPost = async (req, res) => {
       image,
       user: user._id,
     });
-    const userFollowers = await User.findById(userId)
-      .select("followers -_id")
-      .exec();
 
-    userFollowers.followers.map((follower) =>
-      invalidateUserFeedCache(follower)
-    );
+    // const userFollowers = await User.findById(userId)
+    //   .select("followers -_id")
+    //   .exec();
 
-    await invalidateUserFeedCache(user._id);
+    // userFollowers.followers.map((follower) =>
+    //   invalidateUserFeedCache(follower)
+    // );
+
+    // await invalidateUserFeedCache(user._id);
 
     await newPost.save();
 
@@ -90,15 +91,15 @@ const getPosts = async (req, res) => {
   try {
     const user = req.user;
 
-    const cacheKey = `${CACHE_KEY_PREFIX}${user._id}`;
+    // const cacheKey = `${CACHE_KEY_PREFIX}${user._id}`;
 
-    const cachedPosts = await redis.get(cacheKey);
-    if (cachedPosts) {
-      const postData =
-        typeof cachedPosts === "string" ? JSON.parse(cachedPosts) : cachedPosts;
-      // console.log("Cache hit", cacheKey, cachedPosts);
-      return res.status(200).json(postData);
-    }
+    // const cachedPosts = await redis.get(cacheKey);
+    // if (cachedPosts) {
+    //   const postData =
+    //     typeof cachedPosts === "string" ? JSON.parse(cachedPosts) : cachedPosts;
+    //   // console.log("Cache hit", cacheKey, cachedPosts);
+    //   return res.status(200).json(postData);
+    // }
 
     const followingPosts = await Post.find({ user: { $in: user.following } })
       .lean()
@@ -108,7 +109,7 @@ const getPosts = async (req, res) => {
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const sendPostsIds = posts.map((post) => post._id);
 
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(sendPostsIds));
+    // await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(sendPostsIds));
 
     return res.status(200).json(sendPostsIds);
   } catch (error) {
@@ -126,15 +127,15 @@ const getPost = async (req, res) => {
       return res.status(400).json({ message: "Please provide an id" });
     }
 
-    const cacheKey = `post:${postId}`;
+    // const cacheKey = `post:${postId}`;
 
-    const cachedPost = await redis.get(cacheKey);
-    if (cachedPost) {
-      const postData =
-        typeof cachedPost === "string" ? JSON.parse(cachedPost) : cachedPost;
-      // console.log("Cache hit", cacheKey, cachedPost);
-      return res.status(200).json(postData);
-    }
+    // const cachedPost = await redis.get(cacheKey);
+    // if (cachedPost) {
+    //   const postData =
+    //     typeof cachedPost === "string" ? JSON.parse(cachedPost) : cachedPost;
+    //   // console.log("Cache hit", cacheKey, cachedPost);
+    //   return res.status(200).json(postData);
+    // }
 
     const post = await Post.findById(postId)
       .populate([
@@ -164,7 +165,7 @@ const getPost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(post));
+    // await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(post));
 
     return res.status(200).json(post);
   } catch (error) {
@@ -206,16 +207,16 @@ const deletePost = async (req, res) => {
       await cloudinary.uploader.destroy(post.image);
     }
 
-    const userFollowers = await User.findById(post.user)
-      .select("followers -_id")
-      .exec();
+    // const userFollowers = await User.findById(post.user)
+    //   .select("followers -_id")
+    //   .exec();
 
-    userFollowers.followers.map((follower) =>
-      invalidateUserFeedCache(follower)
-    );
+    // userFollowers.followers.map((follower) =>
+    //   invalidateUserFeedCache(follower)
+    // );
 
-    invalidateUserFeedCache(post.user);
-    invalidateUserPostCache(postId);
+    // invalidateUserFeedCache(post.user);
+    // invalidateUserPostCache(postId);
 
     await Like.deleteMany({ post: post._id }).exec();
     await Comment.deleteMany({ post: post._id }).exec();
@@ -255,7 +256,7 @@ const likePost = async (req, res) => {
     });
     post.likes.push(like._id);
 
-    invalidateUserPostCache(postId);
+    // invalidateUserPostCache(postId);
 
     if (post.user.toString() !== user._id.toString()) {
       const notification = new Notification({
@@ -320,7 +321,7 @@ const unlikePost = async (req, res) => {
       (like) => like.toString() !== currentLike._id.toString()
     );
 
-    invalidateUserPostCache(postId);
+    // invalidateUserPostCache(postId);
 
     // const notification = await Notification.findOneAndDelete({
     //   receiver: post.user,
@@ -361,7 +362,7 @@ const commentPost = async (req, res) => {
     // await newComment.save();
     // await post.save();
 
-    invalidateUserPostCache(postId);
+    // invalidateUserPostCache(postId);
 
     await Promise.all([newComment.save(), post.save()]);
 
@@ -418,7 +419,7 @@ const uncommentPost = async (req, res) => {
       (comment) => comment.toString() !== commentId.toString()
     );
 
-    invalidateUserPostCache(postId);
+    // invalidateUserPostCache(postId);
 
     await comment.remove();
     await post.save();
@@ -584,7 +585,7 @@ const savePost = async (req, res) => {
       });
     }
 
-    invalidateUserPostCache(postId);
+    // invalidateUserPostCache(postId);
 
     saved.posts.push(post._id);
     post.savedBy.push(saved._id);
@@ -622,7 +623,7 @@ const unsavePost = async (req, res) => {
       (savedBy) => savedBy.toString() !== saved._id.toString()
     );
 
-    invalidateUserPostCache(postId);
+    // invalidateUserPostCache(postId);
 
     await Promise.all([saved.save(), post.save()]);
     return res.status(200).json({ message: "Post unsaved successfully" });
@@ -774,6 +775,4 @@ module.exports = {
   getSavedPosts,
   getPostSavedByPostId,
   getPostsLikedByUser,
-  invalidateUserFeedCache,
-  invalidateUserPostCache,
 };
