@@ -147,6 +147,12 @@ exports.login = async (req, res) => {
     console.log(req.cookies);
     // console.log(req);
 
+    if (email !== "haitham9559@gmail.com" || email !== "noornar@mail.com") {
+      return res
+        .status(403)
+        .json({ message: "Login disabled for dating purposes" });
+    }
+
     if (!email || !password) {
       return res.status(400).json({ message: "Please fill all fields" });
     }
@@ -157,6 +163,8 @@ exports.login = async (req, res) => {
     if (!validEmail(email)) {
       return res.status(404).json({ message: "Invalid email" });
     }
+
+    console.log("Looking for user with email:", email);
 
     const user = await User.findOne({ email }); // lean() returns a plain JS object instead of a mongoose document  // exec() returns a promise instead of a query      // findOne() returns the first document that matches the query criteria or null if no document matches
     if (!user) {
@@ -479,10 +487,10 @@ exports.updateUser = async (req, res) => {
       .select("followers -_id")
       .exec();
 
-    userFollowers.followers.map((follower) =>
-      invalidateUserFeedCache(follower)
-    );
-    await invalidateUserFeedCache(user._id);
+    // userFollowers.followers.map((follower) =>
+    //   invalidateUserFeedCache(follower)
+    // );
+    // await invalidateUserFeedCache(user._id);
 
     await user.save();
     return res
