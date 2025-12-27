@@ -6,27 +6,12 @@ const User = require("../models/User");
 
 (async () => {
   try {
-    const [email, newPassword, mongoUriArg] = process.argv.slice(2);
+    const [email, newPassword] = process.argv.slice(2);
     if (!email || !newPassword) {
       console.error(
         "Usage: node scripts/resetPassword.js <email> <newPassword>"
       );
       process.exit(1);
-    }
-
-    // Allow passing a Mongo URI as 3rd arg if env missing
-    if (mongoUriArg && !process.env.DATABASE_URL) {
-      process.env.DATABASE_URL = mongoUriArg;
-    }
-
-    if (!process.env.DATABASE_URL) {
-      console.error(
-        "DATABASE_URL is not set. Set it in .env or pass as the 3rd argument."
-      );
-      console.error(
-        "Example: node scripts/resetPassword.js <email> <newPassword> <mongodb+srv://...>"
-      );
-      process.exit(4);
     }
 
     await dbConnect();
