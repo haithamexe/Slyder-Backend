@@ -147,17 +147,19 @@ exports.login = async (req, res) => {
     console.log(req.cookies);
     // console.log(req);
 
-    if (email !== "haitham9559@gmail.com" || email !== "noornar@mail.com") {
-      return res
-        .status(403)
-        .json({ message: "Login disabled for dating purposes" });
-    }
-
     if (!email || !password) {
       return res.status(400).json({ message: "Please fill all fields" });
     }
 
     email = email.toLowerCase().trim();
+
+    // Allow only specific emails to login (temporary gate)
+    const allowedEmails = ["haitham9559@gmail.com", "noornar@mail.com"];
+    if (!allowedEmails.includes(email)) {
+      return res
+        .status(403)
+        .json({ message: "Login disabled for dating purposes" });
+    }
 
     // Check if email is valid change
     if (!validEmail(email)) {
